@@ -4,36 +4,38 @@ import pygame
 from Sprite_handle import *
 
 class Player(pygame.sprite.Sprite):
+    # speed relate
     max_velocity = 4
     acceleration = 0.2
     deceleration_ratio = 0.4
-    player = SpriteHandler(pygame.image.load('sprites\demo_sheet.png'))
-    # temporary probably all change when really got the sprite sheet
 
-    # image = pygame.image.load('jim.png')
-    def __init__(self, position, name='BOY'):
+    def __init__(self, position, name='Player'):
         super().__init__()
-        self.last_update = pygame.time.get_ticks()
-        self.frame_counter = 0
-        self.current_frame = 0
-        self.animation_step = [(0,2),(2,4) ] # idle up-down , idle swap head
-        self.choose = random.choice(self.animation_step)
-
-
+        # Animation related
+        # self.last_update = pygame.time.get_ticks()
         self.size = 5
-        self.image = Player.player.read_sprite_sheet(self.frame_counter,16,16,self.size)
+        self.frame_counter = 0
+        self.animation = {}
+        self.load_sprite()
+        self.image = self.animation['idle'][0][1]
         self.rect = self.image.get_rect()
         self.name = name
-        self.rect.center = (position[0] // 2,position[1] // 2)#(0, position[1] // 2)
+        self.rect.center = (position[0] // 2,position[1] // 2) # get rect from pygame.sprite.Sprite
         self.velocity = [0,0]
-        # self.max_velocity = 1
-        # self.acceleration = 0.2
-        # self.face_state = 'left'
+
+    def load_sprite(self):
+        player_sprite_sheet = SpriteHandler(pygame.image.load('sprites\\test_extract.jpg'))
+
+        sprites_key = {"idle":[[2,0,0,16,16],[2,2,0,16,16]],
+                          "walk":[[2,0,1,16,16],[2,2,1,16,16]]}
+
+        self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.size)
 
 
     def update(self, event=None):
-
+        current_time = pygame.time.get_ticks()
         move_pos = [0,0]
+        # pygame.KEYDOWN
         if event.is_keypress(pygame.K_SPACE):
             self.roll()
             return
@@ -48,27 +50,11 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_s]:
             move_pos[1] = 1
         if keys[pygame.K_LSHIFT]:
-            self.image = pygame.transform.scale(self.image, (200,200))
-
-        if move_pos == [0,0]:
-            animation_delay = 450
-            current_time = pygame.time.get_ticks()
-
-
-            if current_time - self.last_update > animation_delay:
-                self.last_update = current_time
-                self.frame_counter += 1
-                print(self.choose)
-                if self.frame_counter >= self.choose[1]:
-                    self.frame_counter = 0
-                    self.image = Player.player.read_sprite_sheet(self.frame_counter, 16, 16, self.size)
-                    self.choose = random.choice(self.animation_step)
-                    self.frame_counter = self.choose[0]
-                else:
-                    self.image = Player.player.read_sprite_sheet(self.frame_counter, 16, 16, self.size)
-
+            self.size = 200
+            self.image = pygame.transform.scale(self.image, (self.size,self.size))
 
         self.move(move_pos)
+
 
     def move(self, move_pos):
         if move_pos != [0,0]:
@@ -101,9 +87,5 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
 
-
-    def draw_player(self, _window):
-        _window.blit(self.image, (self.pos_x, self.pos_y))
-
     def roll(self):
-        self.rect.x += 150
+        self.rect.x += 50
