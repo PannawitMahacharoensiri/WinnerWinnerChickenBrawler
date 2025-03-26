@@ -15,8 +15,8 @@ class EventHandle:
                 if event.key == pygame.K_ESCAPE:
                     self.quit = True
                 self.key_press.add(event.key)
-            if event.type == pygame.KEYUP:
-                self.key_press.remove(event.key)
+            # if event.type == pygame.KEYUP:
+            #     self.key_press.remove(event.key)
             if  event.type == pygame.MOUSEMOTION:
                 self.mouse_position = event.pos
 
@@ -26,6 +26,7 @@ class EventHandle:
 
     def is_keypress(self, key):
         if key in self.key_press:
+            self.key_press.remove(key)
             return True
         return False
 

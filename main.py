@@ -8,6 +8,7 @@ color = {'black':(0, 0, 0), 'white':(255, 255, 255)}
 screen_info = (1024,576)
 tracker1 = pygame.time.get_ticks()
 clock = pygame.time.Clock()
+frame_delay = 300
 
 # main game setting
 play_state = True
@@ -25,13 +26,20 @@ all_objects = pygame.sprite.Group()
 all_objects.add(player)
 
 while play_state:
+    frame = 0
     tracker2 = pygame.time.get_ticks()
-    print(tracker1, "||||||||||||||" ,tracker2)
+    # print(tracker1, "||||||||||||||" ,tracker2)
+
+    # frame update calculate
+    if tracker2 - tracker1 >= frame_delay:
+        frame = 1
+        tracker1 = tracker2
+
     event_object.update_event()
     clock.tick(60)
 
     # print(f"FPS: {clock.get_fps():.2f}")
-    all_objects.update(event_object)
+    all_objects.update(frame, event_object)
     window.blit(background,(0,0))
     all_objects.draw(window)
 
