@@ -2,11 +2,11 @@ import pygame
 
 class SpriteHandler:
     def __init__(self, sheet_image):
-        self.sheet = sheet_image
+        self.__sheet = sheet_image
 
     def read_sprite_sheet(self, row, level, w_area, h_area, scale_size = None, flip = False ):
         image = pygame.Surface((w_area, h_area))
-        image.blit(self.sheet, (0, 0), ((row * w_area), (level * h_area), w_area, h_area))
+        image.blit(self.__sheet, (0, 0), ((row * w_area), (level * h_area), w_area, h_area))
         image.set_colorkey((255, 255, 255))
 
         if scale_size is not None:

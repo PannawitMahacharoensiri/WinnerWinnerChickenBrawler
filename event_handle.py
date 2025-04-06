@@ -4,6 +4,7 @@ class EventHandle:
     def __init__(self):
         self.key_press = set()
         self.mouse_position = (0,0)
+        self.mouse_button = set()
         self.quit = False
 
     def update_event(self):
@@ -17,16 +18,28 @@ class EventHandle:
                 self.key_press.add(event.key)
             # if event.type == pygame.KEYUP:
             #     self.key_press.remove(event.key)
-            if  event.type == pygame.MOUSEMOTION:
+            if event.type == pygame.MOUSEMOTION:
                 self.mouse_position = event.pos
+            # if event.type == pygame.MOUSEBUTTONUP:
+            #     self.mouse_button.remove(event.button)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.mouse_button.add(event.button)
+
 
     def reset_event(self):
         self.key_press = set()
         self.mouse_position = (0,0)
+        self.mouse_button = set()
 
     def is_keypress(self, key):
         if key in self.key_press:
             self.key_press.remove(key)
+            return True
+        return False
+
+    def mouse_click(self, button):
+        if button in self.mouse_button:
+            self.mouse_button.remove(button)
             return True
         return False
 
