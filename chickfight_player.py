@@ -29,6 +29,7 @@ class Player(pygame.sprite.Sprite):
         self.name = name
         self.rect.center = (position[0] // 2,position[1] // 2) # get rect from pygame.sprite.Sprite
         self.velocity = [0,0]
+        self.atk_pos = (0,0)
 
     def load_sprite(self):
         player_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
@@ -50,7 +51,6 @@ class Player(pygame.sprite.Sprite):
     #     pass
 
     def update(self, frame, atk_group, event=None):
-        print(self.action)
 
         self.frame_counter += frame
 
@@ -101,13 +101,20 @@ class Player(pygame.sprite.Sprite):
             self.move(move_pos)
 
         if event.mouse_click(1):
+            if self.action != "attack1":
+                self.frame_counter = 0
+            """set frame when click"""
             self.action = "attack1"
+            self.atk_pos = event.mouse_position
         elif event.mouse_click(3):
+            if self.action != "attack2":
+                self.frame_counter = 0
             self.action = "attack2"
+            self.atk_pos = event.mouse_position
 
         # if self.velocity == [0,0]:
         #     self.action = 'idle'
-        self.attack(event.mouse_position, atk_group)
+        self.attack(atk_group)
         self.animated()
 
     # def keyboard_input(self):
@@ -203,17 +210,23 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
 
-    def attack(self, mouse_pos, atk_group):
+    def attack(self, atk_group):
         if self.action == 'attack1':
             if self.frame_counter == len(self.animation[self.action][self.direction]) :
-                atk = Attack("melee", self, 7 ,(self.rect.width, self.rect.height), mouse_pos)
+                atk = Attack("melee", self, 7 ,(self.rect.width, self.rect.height), self.atk_pos)
                 atk_group.add(atk)
+                self.direction = atk.atk_dir
+                # RESET VALUE
                 self.action = 'idle'
+                self.atk_pos = (0, 0)
         elif self.action == 'attack2':
             if self.frame_counter == len(self.animation[self.action][self.direction])-2 :
-                atk = Attack("remote", self, 7 ,(self.rect.width//2, self.rect.height//2), mouse_pos)
+                atk = Attack("remote", self, 7 ,(self.rect.width//2, self.rect.height//2), self.atk_pos)
                 atk_group.add(atk)
+                self.direction = atk.atk_dir
+                # RESET VALUE
                 self.action = 'idle'
+                self.atk_pos = (0,0)
 
     def roll(self):
         if self.direction == 0:
