@@ -33,7 +33,8 @@ class Attack(pygame.sprite.Sprite):
             self.atk_dir = 0
         else :
             self.atk_dir = 1
-
+        # self.rect.x = mouse_position[0]
+        # self.rect.y = mouse_position[1]
         self.rect.x = self.maker.rect.x + Attack.atk_direction[direction][0]
         self.rect.y = self.maker.rect.y + Attack.atk_direction[direction][1]
 

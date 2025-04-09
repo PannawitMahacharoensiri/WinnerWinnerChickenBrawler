@@ -17,6 +17,7 @@ class SpriteHandler:
         return image
 
     def pack_sprite(self, sprites_key, scale_size):
+        new_sprites_key = dict()
         for name,action in sprites_key.items():
             temp_big_list = []
             for d in action:
@@ -25,6 +26,6 @@ class SpriteHandler:
                     image = self.read_sprite_sheet(d[1]+i, d[2], d[3], d[4], scale_size)
                     temp_small_list.append(image)
                 temp_big_list.append(temp_small_list)
-            sprites_key[name] = temp_big_list
-        return sprites_key
+            new_sprites_key[name] = temp_big_list
+        return new_sprites_key
 
