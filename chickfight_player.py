@@ -28,8 +28,10 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect() # function of pygame.Surface # get hit box base on picture -> may still do the same
         # self.rect = pygame.Rect(0,0,20,20)
         # print(self.rect)
-        self.rect.width = 50
-        self.rect.height = 50
+
+        ### MANUAL UPDATE SIZE
+        # self.rect.width = 50
+        # self.rect.height = 50
 
         self.name = name
         self.rect.center = (0, position[1] // 2) # get rect from pygame.sprite.Sprite
@@ -55,6 +57,9 @@ class Player(pygame.sprite.Sprite):
                         "attack2":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]]}
 
         self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.size)
+
+        ## REUSE CONTAINTER FOR LATER FUNCTION
+        self.size *= sprites_key["idle"][0][4]
 
     """
     Direction :
@@ -235,7 +240,7 @@ class Player(pygame.sprite.Sprite):
                 self.atk_pos = (0, 0)
         elif self.action == 'attack2':
             if self.frame_counter == len(self.animation[self.action][self.direction])-2 :
-                atk = Attack("remote", self, 7 ,(self.rect.width//2, self.rect.height//2), self.atk_pos)
+                atk = Attack("remote", self, 7 ,(self.rect.width/5, self.rect.height/5), self.atk_pos)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
                 # RESET VALUE

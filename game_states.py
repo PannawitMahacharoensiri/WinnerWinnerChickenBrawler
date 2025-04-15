@@ -34,26 +34,25 @@ class Gameplay(GameState):
     def draw_screen(self):
         # background = pygame.transform.scale(pygame.image.load("sprites\grass.jpg"), Config.screen_info) #depend on game state
         self.game.window.blit(self.background, (0, 0))
-        self.game.player_group.draw(self.game.window)
+        self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
 
     def update_screen(self, frame):
-        self.game.player_group.update(frame, self.game.attack_group, event_object)
+        self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
         self.check_collision()
 
     def check_collision(self):
-        collide = pygame.sprite.groupcollide(self.game.attack_group, self.game.player_group, False, False)
+        collide = pygame.sprite.groupcollide(self.game.attack_group, self.game.entities_group, False, False)
         if collide != {}:
-            for bullet, hit_enemies in collide.items():
-                for enemy in hit_enemies:
-                    print(f"Bullet from {bullet.maker.name} hit Enemy {enemy.name}!")
-                    enemy.health -= bullet.damage
-                self.game.attack_group.remove(bullet)
-            # for player,attack in collide.items():
-            #
-            #     for each in attack:
-            #         if type(player) != type(each.maker):
-            #             player.health -= each.damage
-            #             each.damage = 0
-                        # self.game.attack_group.remove(each)
+            for bullet, entities_group in collide.items():
+                for entities in entities_group:
+                    if type(bullet.maker) != type(entities) and entities not in bullet.already_hit:
+                        # print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}!")
+                        entities.health -= bullet.damage
+                        bullet.already_hit.append(entities)
+                # self.game.attack_group.remove(bullet)
+
+    def check_boundary(self):
+        # Check do their is the screen boundary or other entities or not it NO so the entities can allow to move
+        pass

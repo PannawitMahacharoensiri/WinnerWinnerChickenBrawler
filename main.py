@@ -14,11 +14,11 @@ class Main:
         self.tracker2 = None
         self.clock = pygame.time.Clock()
         self.program_running = True
-        self.player_group = pygame.sprite.Group()
+        self.player = None
+        self.entities_group = pygame.sprite.Group()
         self.attack_group = pygame.sprite.Group()
         self.window = pygame.display.set_mode(Config.screen_info)
         pygame.display.set_caption('Winner Winner Chicken Brawler')
-
         self.game_state = dict()
         self.current_state = None
 
@@ -28,18 +28,6 @@ class Main:
             frame = 1
             self.tracker1 = self.tracker2
         return frame
-
-    # def update_screen(self, frame):
-    #
-    #     self.player_group.update(frame, self.attack_group, event_object)
-    #     self.attack_group.update(frame, self.attack_group)
-
-
-    # def render_screen(self):
-    #     # background = pygame.transform.scale(pygame.image.load("sprites\grass.jpg"), Config.screen_info) #depend on game state
-    #     self.window.blit(background, (0, 0))
-    #     self.player_group.draw(self.window)
-    #     self.attack_group.draw(self.window)
 
     def change_state(self, event):
         if len(event.key_press) != 0:
@@ -51,13 +39,13 @@ class Main:
     def main_loop(self):
         background = pygame.transform.scale(pygame.image.load("sprites\grass.jpg"),
                                             Config.screen_info)  # depend on game state
-        chicken_jokey = Boss1("chick jokey",400, 250)
+        # chicken_jokey = Boss1("chick jokey",400, 250, self)
         player = Player(Config.screen_info, name="jim")
-        jokey = Boss1("jokey", 450,250)
-
-        self.player_group.add(player)
-        self.player_group.add(chicken_jokey)
-        self.player_group.add(jokey)
+        jokey = Boss1("jokey", 450,250, self)
+        self.player = player
+        self.entities_group.add(self.player)
+        # self.entities_group.add(chicken_jokey)
+        self.entities_group.add(jokey)
 
         self.game_state["Menu"] = MainMenu(self)
         self.game_state["Gameplay"] = Gameplay(self, background)
@@ -66,22 +54,23 @@ class Main:
         while self.program_running:
             if event_object.is_keypress(pygame.K_q):
                 show_health = []
-                for i in self.player_group.sprites():
+                for i in self.entities_group.sprites():
                     show_health.append(i.health)
                 print(show_health)
             self.tracker2 = pygame.time.get_ticks()
             event_object.update_event()
 
-            # print(tracker1, "||||||||||||||" ,tracker2)
-            # print(f"FPS: {clock.get_fps():.2f}")
+            # print(self.tracker1, "||||||||||||||" ,self.tracker2)
+            # print(f"FPS: {self.clock.get_fps():.2f}")
 
             # frame update calculate
             frame = self.get_frame()
             self.change_state(event_object)
-            # self.update_screen(frame)
             self.game_state[self.current_state].update_screen(frame)
             self.game_state[self.current_state].draw_screen()
-            # self.render_screen()
+
+            if self.current_state == "Gameplay":
+                Config.debug_mode(self.window, self.player, event_object.mouse_position)
 
             if event_object.quit_press():
                 self.program_running = False
