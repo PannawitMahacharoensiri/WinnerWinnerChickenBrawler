@@ -17,14 +17,14 @@ class Player(pygame.sprite.Sprite):
         self.sprite_dir = 'sprites\\Walk_substitute2.png'
         self.size = 5
 
-        self.frame_counter = 0
+        self.frame_animation = 0
         self.action = 'idle'
         self.direction = 0
 
         self.animation = {}
         self.load_sprite()
 
-        self.image = self.animation['idle'][self.direction][self.frame_counter] ## Pygame Surface
+        self.image = self.animation['idle'][self.direction][self.frame_animation] ## Pygame Surface
         self.rect = self.image.get_rect() # function of pygame.Surface # get hit box base on picture -> may still do the same
         # self.rect = pygame.Rect(0,0,20,20)
         # print(self.rect)
@@ -54,7 +54,8 @@ class Player(pygame.sprite.Sprite):
         sprites_key = {"idle":[[2,0,0,16,16],[2,2,0,16,16],[2,4,0,16,16],[2,6,0,16,16]],
                         "walk":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
                         "attack1":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
-                        "attack2":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]]}
+                        "attack2":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
+                        "hurt":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]]}
 
         self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.size)
 
@@ -71,7 +72,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, frame, atk_group, event=None):
 
-        self.frame_counter += frame
+        self.frame_animation += frame
 
         move_pos = [0,0]
         # pygame.KEYDOWN
@@ -111,9 +112,9 @@ class Player(pygame.sprite.Sprite):
             if self.action == "idle" :
                 self.action = "walk"
         if keys[pygame.K_LSHIFT]:
-            self.frame_counter = 1
+            self.frame_animation = 1
             # self.size = 200
-            self.image = self.animation['idle'][self.direction][self.frame_counter]
+            self.image = self.animation['idle'][self.direction][self.frame_animation]
             # self.image = pygame.transform.scale(self.image, (self.size,self.size))
 
         if self.action == "walk":
@@ -121,13 +122,13 @@ class Player(pygame.sprite.Sprite):
 
         if event.mouse_click(1):
             if self.action != "attack1":
-                self.frame_counter = 0
+                self.frame_animation = 0
             """set frame when click"""
             self.action = "attack1"
             self.atk_pos = event.mouse_position
         elif event.mouse_click(3):
             if self.action != "attack2":
-                self.frame_counter = 0
+                self.frame_animation = 0
             self.action = "attack2"
             self.atk_pos = event.mouse_position
 
@@ -135,7 +136,6 @@ class Player(pygame.sprite.Sprite):
         #     self.action = 'idle'
         self.attack(atk_group)
         self.animated()
-
     # def keyboard_input(self):
     #     move_pos = [0,0]
     #     # pygame.KEYDOWN
@@ -188,13 +188,13 @@ class Player(pygame.sprite.Sprite):
         if self.check_end_animated():
             self.action =  'idle'
         else :
-            self.image = self.animation[self.action][self.direction][self.frame_counter]
+            self.image = self.animation[self.action][self.direction][self.frame_animation]
 
 
 
     def check_end_animated(self):
-        if self.frame_counter >= len(self.animation[self.action][self.direction]):
-            self.frame_counter = 0
+        if self.frame_animation >= len(self.animation[self.action][self.direction]):
+            self.frame_animation = 0
             return True
         return False
 
@@ -231,7 +231,7 @@ class Player(pygame.sprite.Sprite):
 
     def attack(self, atk_group):
         if self.action == 'attack1':
-            if self.frame_counter == len(self.animation[self.action][self.direction]) :
+            if self.frame_animation == len(self.animation[self.action][self.direction]) :
                 atk = Attack("melee", self, 7 ,(self.rect.width, self.rect.height), self.atk_pos)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
@@ -239,8 +239,8 @@ class Player(pygame.sprite.Sprite):
                 self.action = 'idle'
                 self.atk_pos = (0, 0)
         elif self.action == 'attack2':
-            if self.frame_counter == len(self.animation[self.action][self.direction])-2 :
-                atk = Attack("remote", self, 7 ,(self.rect.width/5, self.rect.height/5), self.atk_pos)
+            if self.frame_animation == len(self.animation[self.action][self.direction])-2 :
+                atk = Attack("global", self, 7 ,(self.rect.width/3, self.rect.height/3), self.atk_pos)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
                 # RESET VALUE
