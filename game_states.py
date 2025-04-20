@@ -1,4 +1,5 @@
 import pygame
+from config import config
 from event_handle import event_object
 
 class GameState:
@@ -23,6 +24,11 @@ class MainMenu(GameState):
         text2 = font.render("Press any button to continue", True, (255, 255, 255))
         self.game.window.blit(text, (250, 250))
         self.game.window.blit(text2, (50,350))
+        if config.debug_mode is True:
+            font_small = pygame.font.SysFont(None, 40)
+            tell_debug = font_small.render("Debug mode", False, (255, 255, 255))
+            self.game.window.blit(tell_debug, (50, 100))
+
 
     def update_screen(self, frame):
         pass
@@ -49,14 +55,14 @@ class Gameplay(GameState):
             for bullet, entities_group in collide.items():
                 for entities in entities_group:
                     if type(bullet.maker) != type(entities) and entities not in bullet.already_hit and entities.action != "hurt":
-                        # DEBUG TELL
-                        print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}!")
                         bullet.already_hit.append(entities)
-
+                        if config.debug_mode is True :
+                            print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}! : {entities.health}")
                         # INVISIBLE FRAME
-                        entities.health -= bullet.damage
-                        entities.action = "hurt"
-                        entities.frame_animation = 0
+                        entities.health_reduce(bullet.damage)
+                        # WILL SENT TO BE IN EACH CHARACTER CLASS
+                        # entities.action = "hurt"
+                        # entities.frame_animation = 0
 
     def check_boundary(self):
         # Check do their is the screen boundary or other entities or not it NO so the entities can allow to move

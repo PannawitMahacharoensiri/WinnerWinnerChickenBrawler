@@ -1,5 +1,5 @@
 from Sprite_handle import *
-from config import *
+from config import config
 from Attack import Attack
 import pygame
 
@@ -14,11 +14,17 @@ class Enemy(pygame.sprite.Sprite):
         self.frame_animation = 0
         self.animation = set()
         self.atk_pos = (0,0)
+        self.status = None
 
     def load_sprite(self, sprites_key):
         Enemy_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
         self.animation = Enemy_sprite_sheet.pack_sprite(sprites_key, self.size)
         self.size *= self.sprites_key["idle"][0][4]
+
+    def health_reduce(self, bullet_damage):
+        self.health -= bullet_damage
+        self.action = "hurt"
+        self.frame_animation = 0
 
 
 class Boss1(Enemy):

@@ -1,5 +1,5 @@
 import pygame
-from config import Config
+from config import config
 
 class Attack(pygame.sprite.Sprite):
     atk_direction = {"N":(0,-10), "S":(0,100), "E":(-100,0), "W":(100,0)}
@@ -10,7 +10,12 @@ class Attack(pygame.sprite.Sprite):
         self.maker = maker
         self.damage = damage
         self.image = pygame.Surface(hit_box) #Attack hit box tuple - How wide
-        self.image.fill((0, 255, 0))
+
+        if config.debug_mode is True:
+            self.image.fill((0, 255, 0))
+        else :
+            self.image.set_colorkey((0, 0, 0))
+
         self.rect = self.image.get_rect()
         self.bullet_speed = bullet_speed
         self.already_hit = []
@@ -33,9 +38,9 @@ class Attack(pygame.sprite.Sprite):
         if self.a_type == "global":
             self.rect.center = mouse_position
         else :
-            atk_degree = Config.get_degree(self.maker.rect.center, mouse_position)
-            direction = Config.check_8direction(atk_degree)
-            real_position = Config.direction_position(direction, self.rect.height, self.maker.size)
+            atk_degree = config.get_degree(self.maker.rect.center, mouse_position)
+            direction = config.check_8direction(atk_degree)
+            real_position = config.direction_position(direction, self.rect.height, self.maker.size)
             self.rect.center = (self.maker.rect.center[0] + real_position[0],
                                 self.maker.rect.center[1] + real_position[1])
 

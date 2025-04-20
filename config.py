@@ -2,9 +2,12 @@ import math
 import pygame
 
 class Config:
-    frame_delay = 300
     color = {'black': (0, 0, 0), 'white': (255, 255, 255), 'green':(0, 255, 0)}
-    screen_info = (1024, 576)
+
+    def __init__(self, debug=False):
+        self.debug_mode = debug
+        self.frame_delay = 300
+        self.screen_info = (1024, 576)
 
     @staticmethod
     def get_degree(A,B):
@@ -15,7 +18,7 @@ class Config:
         print("Can't compute none x,y value")
 
     @staticmethod
-    def debug_mode(screen, A, B):
+    def open_debug(screen, A, B):
 
         # MOUSE
         my_font = pygame.font.SysFont('Comic Sans MS', 50)
@@ -90,3 +93,5 @@ class Config:
             y = -(attack_height/2) -(maker_size/2)
 
         return [x,y]
+
+config = Config(True)

@@ -16,6 +16,7 @@ class Player(pygame.sprite.Sprite):
         self.health = health
         self.sprite_dir = 'sprites\\Walk_substitute2.png'
         self.size = 5
+        self.status = None
 
         self.frame_animation = 0
         self.action = 'idle'
@@ -189,6 +190,10 @@ class Player(pygame.sprite.Sprite):
             self.action =  'idle'
         else :
             self.image = self.animation[self.action][self.direction][self.frame_animation]
+
+    def health_reduce(self, bullet_damage):
+        self.health -= bullet_damage
+        self.action = "hurt"
 
 
 
