@@ -1,7 +1,7 @@
 from chickfight_player import Player
 from event_handle import event_object
 from Sprite_handle import *
-from config import config
+from config import Config
 import pygame
 import math
 from game_states import *
@@ -17,14 +17,19 @@ class Main:
         self.player = None
         self.entities_group = pygame.sprite.Group()
         self.attack_group = pygame.sprite.Group()
-        self.window = pygame.display.set_mode(config.screen_info)
+
+        self.debug_mode = True
+        self.screen_scale = 1
+        self.screen_info = (1024, 576)
+        self.window = pygame.display.set_mode(self.screen_info, pygame.RESIZABLE)
+
         pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.game_state = dict()
         self.current_state = None
 
     def get_frame(self):
         frame = 0
-        if self.tracker2 - self.tracker1 >= config.frame_delay:
+        if self.tracker2 - self.tracker1 >= Config.frame_delay:
             frame = 1
             self.tracker1 = self.tracker2
         return frame
@@ -37,11 +42,11 @@ class Main:
 
 
     def main_loop(self):
-        background = pygame.transform.scale(pygame.image.load("sprites\grass.jpg"),
-                                            config.screen_info)  # depend on game state
+        background = pygame.transform.scale(pygame.image.load("sprites\\grass.jpg"),
+                                            self.screen_info)  # depend on game state
         # chicken_jokey = Boss1("chick jokey",400, 250, self)
-        player = Player(config.screen_info, name="jim")
-        jokey = Boss1("jokey", 450,250, self)
+        player = Player(self.screen_info, game = self, name="jim")
+        jokey = Boss1((450,250),game = self, name = "jokey")
         self.player = player
         self.entities_group.add(self.player)
         # self.entities_group.add(chicken_jokey)
@@ -53,20 +58,19 @@ class Main:
 
         while self.program_running:
             keys = pygame.key.get_pressed()
-
             if event_object.is_keypress(pygame.K_q):
                 show_health = []
                 for i in self.entities_group.sprites():
                     show_health.append(i.health)
                 print(show_health)
             self.tracker2 = pygame.time.get_ticks()
-            event_object.update_event()
+            # event_object.update_event(self)
 
             if keys[pygame.K_LSHIFT] and event_object.is_keypress(pygame.K_1):
-                if config.debug_mode is True:
-                    config.debug_mode = False
+                if self.debug_mode is True:
+                    self.debug_mode = False
                 else :
-                    config.debug_mode = True
+                    self.debug_mode = True
 
 
             # print(self.tracker1, "||||||||||||||" ,self.tracker2)
@@ -78,11 +82,13 @@ class Main:
             self.game_state[self.current_state].draw_screen()
 
             if self.current_state == "Gameplay":
-                if config.debug_mode is True:
-                    config.open_debug(self.window, self.player, event_object.mouse_position)
+                if self.debug_mode is True:
+                    Config.open_debug(self.window, self.player, event_object.mouse_position)
 
             if event_object.quit_press():
                 self.program_running = False
+
+            event_object.update_event(self)
             self.clock.tick(60)
             pygame.display.update()
         pygame.quit()

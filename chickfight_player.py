@@ -3,6 +3,7 @@ import random
 import pygame
 from Sprite_handle import *
 from Attack import Attack
+from config import Config
 
 class Player(pygame.sprite.Sprite):
     # speed relate
@@ -10,9 +11,10 @@ class Player(pygame.sprite.Sprite):
     acceleration = 0.2
     deceleration_ratio = 0.4
 
-    def __init__(self, position, name='Player',health=100.0):
+    def __init__(self, position, game, name='Player',health=100.0):
         super().__init__()
         # Animation related
+        self.game = game
         self.health = health
         self.sprite_dir = 'sprites\\Walk_substitute2.png'
         self.size = 5
@@ -114,9 +116,7 @@ class Player(pygame.sprite.Sprite):
                 self.action = "walk"
         if keys[pygame.K_LSHIFT]:
             self.frame_animation = 1
-            # self.size = 200
             self.image = self.animation['idle'][self.direction][self.frame_animation]
-            # self.image = pygame.transform.scale(self.image, (self.size,self.size))
 
         if self.action == "walk":
             self.movement(move_pos)
@@ -234,6 +234,10 @@ class Player(pygame.sprite.Sprite):
         # print(self.velocity)
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
+
+        # Reset value when it exceeds boundaries
+        self.rect.x, self.rect.y = Config.check_boundary((self.rect.x,self.rect.y), self.size, self.game.screen_info)
+
 
     def attack(self, atk_group):
         if self.action == 'attack1':

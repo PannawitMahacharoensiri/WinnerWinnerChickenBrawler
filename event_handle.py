@@ -1,4 +1,5 @@
 import pygame
+from config import Config
 
 class EventHandle:
     def __init__(self):
@@ -7,9 +8,16 @@ class EventHandle:
         self.mouse_button = set()
         self.quit = False
 
-    def update_event(self):
+    def update_event(self, game=None):
         event_list = pygame.event.get()
         for event in event_list:
+            if event.type == pygame.VIDEORESIZE:
+                # print(event.dict['size'])
+                game.window = pygame.display.set_mode(event.dict['size'], pygame.RESIZABLE)
+                print(event.dict['size'])
+                # config.screen_info = event.dict['size']
+                ## SEND VALUE TO CONFIGURE TO GET THE SCREEN THAT STILL 16:9 RATIO
+                game.screen_info = event.dict['size']
             if event.type == pygame.QUIT:
                 self.quit = True
             if event.type == pygame.KEYDOWN:

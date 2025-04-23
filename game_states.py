@@ -1,5 +1,5 @@
 import pygame
-from config import config
+from config import Config
 from event_handle import event_object
 
 class GameState:
@@ -24,7 +24,7 @@ class MainMenu(GameState):
         text2 = font.render("Press any button to continue", True, (255, 255, 255))
         self.game.window.blit(text, (250, 250))
         self.game.window.blit(text2, (50,350))
-        if config.debug_mode is True:
+        if self.game.debug_mode is True:
             font_small = pygame.font.SysFont(None, 40)
             tell_debug = font_small.render("Debug mode", False, (255, 255, 255))
             self.game.window.blit(tell_debug, (50, 100))
@@ -40,7 +40,7 @@ class Gameplay(GameState):
         self.background = bg
 
     def draw_screen(self):
-        self.game.window.blit(self.background, (0, 0))
+        self.game.window.blit(pygame.transform.scale(self.background, self.game.screen_info), (0, 0))
         self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
 
@@ -58,11 +58,5 @@ class Gameplay(GameState):
                         bullet.already_hit.append(entities)
                         entities.health_reduce(bullet.damage)
 
-                        if config.debug_mode is True :
+                        if self.game.debug_mode is True :
                             print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}! : {entities.health}")
-
-
-
-    def check_boundary(self):
-        # Check do their is the screen boundary or other entities or not it NO so the entities can allow to move
-        pass
