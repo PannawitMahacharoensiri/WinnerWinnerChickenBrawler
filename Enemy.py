@@ -2,6 +2,7 @@ from Sprite_handle import *
 from config import config
 from Attack import Attack
 import pygame
+import math
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, heath=100):
@@ -47,6 +48,7 @@ class Boss1(Enemy):
         self.rect.y = y #Config.screen_info[1] //2
         self.game = game
         self.cooldown = 0
+        self.speed = 2
 
 
     def update(self, frame, atk_group, event=None):
@@ -65,18 +67,42 @@ class Boss1(Enemy):
         self.attack(atk_group)
         self.image = self.animation[self.action][self.direction][self.frame_animation]
 
-    def attack(self, atk_group):
-        if self.action == "attack" and self.cooldown == 0:
-            atk = Attack("melee", self, 5, (100/2,100/2), self.atk_pos)
-            atk_group.add(atk)
-            self.action = "idle"
-            self.atk_pos = (0,0)
-            self.frame_animation = 0
-            self.cooldown = 5
 
+
+    def attack(self, atk_group):
+
+        # MAYBE I WILL CHANGE COOL DOWN TO BE FOR EACH ATTACK
+        if self.cooldown == 0:
+            # FOR SIMPLE ATTACK
+            if self.action == "attack" and self.frame_animation == 1 :
+                atk = Attack("melee", self, 5, (100/2,100/2), self.atk_pos)
+                atk_group.add(atk)
+                self.action = "idle"
+                self.atk_pos = (0,0)
+                self.frame_animation = 0
+                self.cooldown = 5
+
+    def movement(self):
+        player_x,player_y = self.game.player.rect.center
+
+        dx = player_x - self.rect.center[0]
+        dy = player_y - self.rect.center[1]
+        lenght = math.sqrt(dx**2 + dy**2)
+
+        if lenght > 0:
+            self.rect.center = (self.rect.center[0] + (dx/lenght) * self.speed ,
+                                self.rect.center[1] + (dy/lenght) * self.speed)
 
 
     def behaviour(self):
+
+        # if self already action return out ?
+        if self.action in ["attack", "hurt"]:
+            return
+
+        # update behaviour
+        self.movement()
+
         if ( (self.rect.center[0] - self.size/2 - 100 < self.game.player.rect.center[0] + self.game.player.velocity[0]*self.cooldown < self.rect.center[0] + self.size/2 + 100) and
             (self.rect.center[1] - self.size/2 - 100 < self.game.player.rect.center[1] + self.game.player.velocity[1]*self.cooldown < self.rect.center[1] + self.size/2 + 100) ):
             self.atk_pos = self.game.player.rect.center

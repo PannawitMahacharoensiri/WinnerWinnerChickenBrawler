@@ -56,7 +56,7 @@ class Player(pygame.sprite.Sprite):
                         "walk":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
                         "attack1":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
                         "attack2":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
-                        "hurt":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]]}
+                        "hurt":[[1,0,1,16,16],[1,0,1,16,16],[1,0,1,16,16],[1,0,1,16,16]]}
 
         self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.size)
 
@@ -119,7 +119,7 @@ class Player(pygame.sprite.Sprite):
             # self.image = pygame.transform.scale(self.image, (self.size,self.size))
 
         if self.action == "walk":
-            self.move(move_pos)
+            self.movement(move_pos)
 
         if event.mouse_click(1):
             if self.action != "attack1":
@@ -194,6 +194,7 @@ class Player(pygame.sprite.Sprite):
     def health_reduce(self, bullet_damage):
         self.health -= bullet_damage
         self.action = "hurt"
+        self.frame_animation = 0
 
 
 
@@ -203,7 +204,7 @@ class Player(pygame.sprite.Sprite):
             return True
         return False
 
-    def move(self, move_pos):
+    def movement(self, move_pos):
         if move_pos != [0,0]:
             if (abs(self.velocity[0])+self.acceleration >= Player.max_velocity or
             abs(self.velocity[1])+self.acceleration >= Player.max_velocity):

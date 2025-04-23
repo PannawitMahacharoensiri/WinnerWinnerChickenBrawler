@@ -56,13 +56,12 @@ class Gameplay(GameState):
                 for entities in entities_group:
                     if type(bullet.maker) != type(entities) and entities not in bullet.already_hit and entities.action != "hurt":
                         bullet.already_hit.append(entities)
+                        entities.health_reduce(bullet.damage)
+
                         if config.debug_mode is True :
                             print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}! : {entities.health}")
-                        # INVISIBLE FRAME
-                        entities.health_reduce(bullet.damage)
-                        # WILL SENT TO BE IN EACH CHARACTER CLASS
-                        # entities.action = "hurt"
-                        # entities.frame_animation = 0
+
+
 
     def check_boundary(self):
         # Check do their is the screen boundary or other entities or not it NO so the entities can allow to move
