@@ -11,24 +11,30 @@ class Config:
         valid_screen_info = curr_screen_info
         valid_scale = current_scale
 
-        if curr_screen_info[0] > 1920 or curr_screen_info[1] > 1080:
+        if curr_screen_info[0] > 1920 or curr_screen_info[1] > 1080 or curr_screen_info == (1920, 1080) :
             valid_screen_info = (1920, 1080)
             valid_scale = 7.5
-        elif curr_screen_info[0] > 1600 or curr_screen_info[1] > 900:
+        elif curr_screen_info[0] > 1600 or curr_screen_info[1] > 900 or curr_screen_info == (1600, 900):
             valid_screen_info = (1600, 900)
             valid_scale = 6.25
-        elif curr_screen_info[0] > 1366 or curr_screen_info[1] > 768:
+        elif curr_screen_info[0] > 1366 or curr_screen_info[1] > 768 or curr_screen_info == (1366, 768):
             valid_screen_info = (1366, 768)
             valid_scale = 5.3359375
-        elif curr_screen_info[0] > 1280 or curr_screen_info[1] > 720:
+        elif curr_screen_info[0] > 1280 or curr_screen_info[1] > 720 or curr_screen_info == (1280, 720):
             valid_screen_info = (1280, 720)
             valid_scale = 5
-        elif curr_screen_info[0] > 1024 or curr_screen_info[1] > 576:
+        elif curr_screen_info[0] > 1024 or curr_screen_info[1] > 576 or curr_screen_info == (1024, 576):
             valid_screen_info = (1024, 576)
             valid_scale = 4
-        elif curr_screen_info[0] > 854 or curr_screen_info[1] > 480:
+        elif curr_screen_info[0] > 854 or curr_screen_info[1] > 480 or curr_screen_info == (854, 480):
             valid_screen_info = (854, 480)
             valid_scale = 3.3359375
+        elif curr_screen_info[0] > 512 or curr_screen_info[1] > 288 or curr_screen_info == (512, 288):
+            valid_screen_info = (512, 288)
+            valid_scale = 2
+        elif curr_screen_info[0] > 256 or curr_screen_info[1] > 144 or curr_screen_info == (256, 144):
+            valid_screen_info = (256, 144)
+            valid_scale = 1
 
         if valid_scale/current_scale != 1:
             change_scale = True

@@ -9,11 +9,11 @@ class Attack(pygame.sprite.Sprite):
         self.maker = maker
         self.damage = damage
         self.classic_hitbox = hit_box
-        print(f"This is hitbox {self.classic_hitbox}")
         self.image = pygame.Surface((hit_box[0]*self.maker.game.screen_scale,hit_box[1]*self.maker.game.screen_scale)) #Attack hit box tuple - How wide
         self.show_hitbox()
 
         self.rect = self.image.get_rect()
+        self.size = self.rect.width
         self.bullet_speed = bullet_speed
         self.already_hit = []
 
@@ -52,9 +52,9 @@ class Attack(pygame.sprite.Sprite):
             group.remove(self)
 
     def change_scale(self, game_scale):
-        print(f"attack hitbox {self.classic_hitbox[0]*game_scale, self.classic_hitbox[1]*game_scale}")
         self.image = pygame.Surface((self.classic_hitbox[0]*game_scale, self.classic_hitbox[1]*game_scale))
         self.rect = self.image.get_rect()
+        self.size = self.rect.width
         self.show_hitbox()
 
     # def load_sprite(self, sprites_key):

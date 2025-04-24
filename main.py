@@ -18,12 +18,14 @@ class Main:
         self.entities_group = pygame.sprite.Group()
         self.attack_group = pygame.sprite.Group()
 
-        self.debug_mode = False
+        self.debug_mode = True
+        self.before_scale = None
         self.screen_scale = 4
         self.change_size = {"window":False, "screen":False}
-        self.screen_info = (1024, 576)
+        self.screen_info = (256*self.screen_scale, 144*self.screen_scale)
         self.window = pygame.display.set_mode(self.screen_info, pygame.RESIZABLE)
         self.screen_start = (0,0)
+        self.screen_start_before = self.screen_start
 
         pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.game_state = dict()
@@ -43,11 +45,25 @@ class Main:
             self.current_state = "Menu"
 
     def change_sprite_scale(self):
-        print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
-        for each in self.entities_group:
-            each.load_sprite(each.sprites_key)
-        for each_attack in self.attack_group:
-            each_attack.change_scale(self.screen_scale)
+        # print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
+        if self.change_size["window"] is True:
+            for each in self.entities_group:
+                each.rect.x += self.screen_start[0] - self.screen_start_before[0]
+                each.rect.y += self.screen_start[1] - self.screen_start_before[1]
+            for each_attack in self.attack_group:
+                each_attack.rect.x += self.screen_start[0] - self.screen_start_before[0]
+                each_attack.rect.y += self.screen_start[1] - self.screen_start_before[1]
+        if self.change_size["screen"] is True:
+            for each in self.entities_group:
+                location = (each.rect.x, each.rect.y)
+                each.load_sprite(each.sprites_key)
+                each.rect.x = (location[0]/self.before_scale) * self.screen_scale
+                each.rect.y = (location[1]/self.before_scale) * self.screen_scale
+            for each_attack in self.attack_group:
+                attack_location = (each_attack.rect.x, each_attack.rect.y)
+                each_attack.change_scale(self.screen_scale)
+                each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
+                each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
             # each.rect.x *= self.screen_scale
             # each.rect.y *= self.screen_scaled
 

@@ -60,5 +60,5 @@ class Gameplay(GameState):
                         bullet.already_hit.append(entities)
                         entities.health_reduce(bullet.damage)
 
-                        if self.game.debug_mode is True :
-                            print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}! : {entities.health}")
+                        # if self.game.debug_mode is True :
+                        #     print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}! : {entities.health}")
