@@ -40,7 +40,9 @@ class Gameplay(GameState):
         self.background = bg
 
     def draw_screen(self):
-        self.game.window.blit(pygame.transform.scale(self.background, self.game.screen_info), (0, 0))
+        # FILL COLOR OUTSIDE BORDER
+        self.game.window.fill((0, 0, 0))
+        self.game.window.blit(pygame.transform.scale(self.background, self.game.screen_info), self.game.screen_start)
         self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
 

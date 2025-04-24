@@ -29,3 +29,11 @@ class SpriteHandler:
             new_sprites_key[name] = temp_big_list
         return new_sprites_key
 
+    # @staticmethod
+    # def change_pack_scale(animation, sprite_size, window_scale):
+    #     # print(animation)
+    #     for name,action in animation.items():
+    #         for each_direction in range(len(animation[name])):
+    #             for i in range(len(animation[name][each_direction])):
+    #                 animation[name][each_direction][i] = pygame.transform.scale(animation[name][each_direction][i], ( sprite_size * window_scale, sprite_size * window_scale))
+    #     return animation

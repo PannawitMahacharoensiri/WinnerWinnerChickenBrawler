@@ -5,28 +5,60 @@ class Config:
     frame_delay = 300
     color = {'black': (0, 0, 0), 'white': (255, 255, 255), 'green':(0, 255, 0)}
 
-    # def __init__(self, debug=False):
-    #     self.debug_mode = debug
-    #     # self.frame_delay = 300
-    #     self.screen_info = (1024, 576)
+    @staticmethod
+    def screen_ratio(curr_screen_info, current_scale):
+        change_scale = False
+        valid_screen_info = curr_screen_info
+        valid_scale = current_scale
+
+        if curr_screen_info[0] > 1920 or curr_screen_info[1] > 1080:
+            valid_screen_info = (1920, 1080)
+            valid_scale = 7.5
+        elif curr_screen_info[0] > 1600 or curr_screen_info[1] > 900:
+            valid_screen_info = (1600, 900)
+            valid_scale = 6.25
+        elif curr_screen_info[0] > 1366 or curr_screen_info[1] > 768:
+            valid_screen_info = (1366, 768)
+            valid_scale = 5.3359375
+        elif curr_screen_info[0] > 1280 or curr_screen_info[1] > 720:
+            valid_screen_info = (1280, 720)
+            valid_scale = 5
+        elif curr_screen_info[0] > 1024 or curr_screen_info[1] > 576:
+            valid_screen_info = (1024, 576)
+            valid_scale = 4
+        elif curr_screen_info[0] > 854 or curr_screen_info[1] > 480:
+            valid_screen_info = (854, 480)
+            valid_scale = 3.3359375
+
+        if valid_scale/current_scale != 1:
+            change_scale = True
+        ## Screen_width / classic_character&screen_ratio(=16) -> sprite_pixel in that screen_width / classic character pixel -> scale
+        return [change_scale, valid_screen_info, valid_scale]
 
     @staticmethod
-    def check_boundary(corner_position, size, screen_info):
+    def window_to_screen(window, screen):
+        new_window = window
+        if window[0] < screen[0] or window[1] < screen[1]:
+            new_window = screen
+        return new_window
+
+    @staticmethod
+    def check_boundary(corner_position, entities_size, screen_info, screen_start):
         # Save position, if the value not exceed boundaries can just use the start position
         valid_x = corner_position[0]
         valid_y = corner_position[1]
 
         # Check then set new position x
-        if corner_position[0] <= 0:
-            valid_x = 0
-        elif corner_position[0]+size >= screen_info[0]:
-            valid_x = screen_info[0]-size
+        if corner_position[0] <= 0 + screen_start[0]:
+            valid_x = 0 + screen_start[0]
+        elif corner_position[0]+ entities_size >= screen_info[0] + screen_start[0]:
+            valid_x = screen_info[0] + screen_start[0] -entities_size
 
         # Check then set new position y
-        if corner_position[1] <= 0:
-            valid_y = 0
-        elif corner_position[1]+size >= screen_info[1]:
-            valid_y = screen_info[1]-size
+        if corner_position[1] <= 0 + screen_start[1]:
+            valid_y = 0 + screen_start[1]
+        elif corner_position[1]+ entities_size >= screen_info[1] + screen_start[1]:
+            valid_y = screen_info[1] + screen_start[1] - entities_size
 
         return valid_x,valid_y
 

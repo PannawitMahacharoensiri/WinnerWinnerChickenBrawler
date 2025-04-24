@@ -10,7 +10,9 @@ class Enemy(pygame.sprite.Sprite):
         self.health = heath
         self.before_health = self.health
         self.image = None
-        self.size = 5
+        self.rect = None
+
+        self.size = 1
         self.action = "idle"
         self.direction = 0
         self.frame_animation = 0
@@ -20,8 +22,10 @@ class Enemy(pygame.sprite.Sprite):
 
     def load_sprite(self, sprites_key):
         Enemy_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
-        self.animation = Enemy_sprite_sheet.pack_sprite(sprites_key, self.size)
-        self.size *= self.sprites_key["idle"][0][4]
+        self.animation = Enemy_sprite_sheet.pack_sprite(sprites_key, self.game.screen_scale)
+        self.size = self.game.screen_scale * sprites_key["idle"][0][4]
+        self.image = self.animation[self.action][self.direction][self.frame_animation]
+        self.rect = self.image.get_rect()
 
     def health_reduce(self, bullet_damage):
         self.health -= bullet_damage
@@ -46,18 +50,17 @@ class Boss1(Enemy):
                    # "attack2": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]]}
 
     ## ONLY FOR READ AND NOT CHANGE THE VALUE SO I NOT PUT IT IN ATTRIBUTE
-    attack_move = {"attack1":{"damage":5, "hitbox":(50,50)}, "attack2":{"damage":20, "hitbox":(20,20)}}
+    attack_move = {"attack1":{"damage":5, "hitbox":(3,3)}, "attack2":{"damage":20, "hitbox":(20,20)}}
 
     def __init__(self, position, game, name):
         super().__init__()
+        self.game = game
         self.name = name
         self.sprite_dir = 'sprites\\Boss1_substitute.png'
+        self.size = self.game.screen_scale
         self.load_sprite(Boss1.sprites_key)
-        self.image = self.animation[self.action][self.direction][self.frame_animation]
-        self.rect = self.image.get_rect()
         self.rect.x = position[0]
         self.rect.y = position[1]
-        self.game = game
         self.cooldown = {"attack1":0, "attack2":0}
         self.speed = 2
 
@@ -114,7 +117,7 @@ class Boss1(Enemy):
         if lenght > 0:
             self.rect.center = (self.rect.center[0] + (dx/lenght) * self.speed ,
                                 self.rect.center[1] + (dy/lenght) * self.speed)
-            self.rect.x, self.rect.y = Config.check_boundary((self.rect.x,self.rect.y), self.size, self.game.screen_info)
+            self.rect.x, self.rect.y = Config.check_boundary((self.rect.x,self.rect.y), self.size, self.game.screen_info, self.game.screen_start)
         return lenght
 
 

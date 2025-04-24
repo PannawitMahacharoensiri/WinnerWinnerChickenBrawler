@@ -10,6 +10,11 @@ class Player(pygame.sprite.Sprite):
     max_velocity = 4
     acceleration = 0.2
     deceleration_ratio = 0.4
+    sprites_key = {"idle": [[2, 0, 0, 16, 16], [2, 2, 0, 16, 16], [2, 4, 0, 16, 16], [2, 6, 0, 16, 16]],
+                   "walk": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
+                   "attack1": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
+                   "attack2": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
+                   "hurt": [[1, 0, 1, 16, 16], [1, 0, 1, 16, 16], [1, 0, 1, 16, 16], [1, 0, 1, 16, 16]]}
 
     def __init__(self, position, game, name='Player',health=100.0):
         super().__init__()
@@ -17,18 +22,17 @@ class Player(pygame.sprite.Sprite):
         self.game = game
         self.health = health
         self.sprite_dir = 'sprites\\Walk_substitute2.png'
-        self.size = 5
+        self.size = self.game.screen_scale
         self.status = None
+        self.image = None ## Pygame Surface
+        self.rect = None # function of pygame.Surface # get hit box base on picture -> may still do the same
 
         self.frame_animation = 0
         self.action = 'idle'
         self.direction = 0
 
         self.animation = {}
-        self.load_sprite()
-
-        self.image = self.animation['idle'][self.direction][self.frame_animation] ## Pygame Surface
-        self.rect = self.image.get_rect() # function of pygame.Surface # get hit box base on picture -> may still do the same
+        self.load_sprite(Player.sprites_key)
         # self.rect = pygame.Rect(0,0,20,20)
         # print(self.rect)
 
@@ -45,7 +49,7 @@ class Player(pygame.sprite.Sprite):
         self.velocity = [0,0]
         self.atk_pos = (0,0)
 
-    def load_sprite(self):
+    def load_sprite(self, sprites_key):
         player_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
 
         """
@@ -54,17 +58,12 @@ class Player(pygame.sprite.Sprite):
         3 is column 
         4,5 is w,h_area of picture
         """
-        sprites_key = {"idle":[[2,0,0,16,16],[2,2,0,16,16],[2,4,0,16,16],[2,6,0,16,16]],
-                        "walk":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
-                        "attack1":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
-                        "attack2":[[4,0,1,16,16],[4,4,1,16,16],[4,8,1,16,16],[4,12,1,16,16]],
-                        "hurt":[[1,0,1,16,16],[1,0,1,16,16],[1,0,1,16,16],[1,0,1,16,16]]}
-
-        self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.size)
-
+        self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.game.screen_scale)
         ## REUSE CONTAINTER FOR LATER FUNCTION
-        self.size *= sprites_key["idle"][0][4]
-
+        # ASK FOR SPRITE KEY TO GET THE SIZE OF
+        self.size = self.game.screen_scale * sprites_key["idle"][0][4]
+        self.image = self.animation[self.action][self.direction][self.frame_animation]
+        self.rect = self.image.get_rect()
     """
     Direction :
         0 : NORTH
@@ -236,13 +235,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.velocity[1]
 
         # Reset value when it exceeds boundaries
-        self.rect.x, self.rect.y = Config.check_boundary((self.rect.x,self.rect.y), self.size, self.game.screen_info)
+        self.rect.x, self.rect.y = Config.check_boundary((self.rect.x,self.rect.y), self.size, self.game.screen_info, self.game.screen_start)
 
 
     def attack(self, atk_group):
         if self.action == 'attack1':
             if self.frame_animation == len(self.animation[self.action][self.direction]) :
-                atk = Attack("melee", self, 7 ,(self.rect.width, self.rect.height), self.atk_pos)
+                atk = Attack("melee", self, 7 ,(10, 10), self.atk_pos)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
                 # RESET VALUE
@@ -250,7 +249,7 @@ class Player(pygame.sprite.Sprite):
                 self.atk_pos = (0, 0)
         elif self.action == 'attack2':
             if self.frame_animation == len(self.animation[self.action][self.direction])-2 :
-                atk = Attack("global", self, 7 ,(self.rect.width/3, self.rect.height/3), self.atk_pos)
+                atk = Attack("global", self, 7 ,(2, 2), self.atk_pos)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
                 # RESET VALUE

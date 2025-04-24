@@ -18,10 +18,12 @@ class Main:
         self.entities_group = pygame.sprite.Group()
         self.attack_group = pygame.sprite.Group()
 
-        self.debug_mode = True
-        self.screen_scale = 1
+        self.debug_mode = False
+        self.screen_scale = 4
+        self.change_size = {"window":False, "screen":False}
         self.screen_info = (1024, 576)
         self.window = pygame.display.set_mode(self.screen_info, pygame.RESIZABLE)
+        self.screen_start = (0,0)
 
         pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.game_state = dict()
@@ -40,11 +42,22 @@ class Main:
         if event.is_keypress(pygame.K_e):
             self.current_state = "Menu"
 
+    def change_sprite_scale(self):
+        print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
+        for each in self.entities_group:
+            each.load_sprite(each.sprites_key)
+        for each_attack in self.attack_group:
+            each_attack.change_scale(self.screen_scale)
+            # each.rect.x *= self.screen_scale
+            # each.rect.y *= self.screen_scaled
+
+        # reset the value
+        self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
         background = pygame.transform.scale(pygame.image.load("sprites\\grass.jpg"),
                                             self.screen_info)  # depend on game state
-        # chicken_jokey = Boss1("chick jokey",400, 250, self)
+
         player = Player(self.screen_info, game = self, name="jim")
         jokey = Boss1((450,250),game = self, name = "jokey")
         self.player = player
@@ -90,6 +103,9 @@ class Main:
 
             event_object.update_event(self)
             self.clock.tick(60)
+            if True in self.change_size.values() :
+                self.change_sprite_scale()
+
             pygame.display.update()
         pygame.quit()
 

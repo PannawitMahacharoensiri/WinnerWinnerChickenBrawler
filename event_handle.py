@@ -12,12 +12,17 @@ class EventHandle:
         event_list = pygame.event.get()
         for event in event_list:
             if event.type == pygame.VIDEORESIZE:
-                # print(event.dict['size'])
+                # check change ratio
+                result_change_ratio = Config.screen_ratio(event.dict['size'], game.screen_scale)
+                if result_change_ratio[0] is True:
+                    game.change_size["screen"] = result_change_ratio[0]
+                    game.screen_info = result_change_ratio[1]
+                    game.screen_scale = result_change_ratio[2]
+                # valid_window = Config.window_to_screen(event.dict['size'], game.screen_info)
                 game.window = pygame.display.set_mode(event.dict['size'], pygame.RESIZABLE)
-                print(event.dict['size'])
-                # config.screen_info = event.dict['size']
-                ## SEND VALUE TO CONFIGURE TO GET THE SCREEN THAT STILL 16:9 RATIO
-                game.screen_info = event.dict['size']
+                game.screen_start = (0,0)
+                # game.screen_start = ((round(valid_window[0]-game.screen_info[0])/ 2), (round(valid_window[1]-game.screen_info[1])/ 2))
+                game.change_size = {"window":False, "screen":True}
             if event.type == pygame.QUIT:
                 self.quit = True
             if event.type == pygame.KEYDOWN:
