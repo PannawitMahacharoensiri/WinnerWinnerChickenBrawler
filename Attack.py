@@ -48,8 +48,15 @@ class Attack(pygame.sprite.Sprite):
                                 self.maker.rect.center[1] + real_position[1])
 
     def delete_atk(self, group):
-        if self.frame_counter == 30:
-            group.remove(self)
+        if self.a_type == "melee":
+            if self.frame_counter == 5:
+                group.remove(self)
+        elif self.a_type == "bullet":
+            if self.frame_counter == 5:
+                group.remove(self)
+        else :
+            if self.frame_counter == 5:
+                group.remove(self)
 
     def change_scale(self, game_scale):
         self.image = pygame.Surface((self.classic_hitbox[0]*game_scale, self.classic_hitbox[1]*game_scale))

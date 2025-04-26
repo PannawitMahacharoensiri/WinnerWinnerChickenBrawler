@@ -1,10 +1,13 @@
 import pygame
 from config import Config
 from event_handle import event_object
+from Enemy_factory import BossFactory
 
 class GameState:
     def __init__(self, game):
         self.game = game # game object
+        self.current_level = 0
+        self.game_level = None
 
     def draw_screen(self):
         pass
@@ -12,10 +15,10 @@ class GameState:
     def clean_state(self):
         pass
 
-
-class MainMenu(GameState):
+class Menu(GameState):
     def __init__(self, game):
         super().__init__(game)
+        self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2}
 
     def draw_screen(self):
         self.game.window.fill((0, 0, 100))
@@ -38,6 +41,8 @@ class Gameplay(GameState):
     def __init__(self, game, bg):
         super().__init__(game)
         self.background = bg
+        self.game_level = {"dummy":0, "Boss1":1, "Boss2":2, "Boss3":3}
+        self.enemy_factory = BossFactory(game)
 
     def draw_screen(self):
         # FILL COLOR OUTSIDE BORDER
@@ -47,18 +52,8 @@ class Gameplay(GameState):
         self.game.attack_group.draw(self.game.window)
 
     def update_screen(self, frame):
+        self.enemy_factory.create_boss(self.current_level)
         self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
-        self.check_collision()
+        Config.check_collision(self.game.attack_group, self.game.entities_group)
 
-    def check_collision(self):
-        collide = pygame.sprite.groupcollide(self.game.attack_group, self.game.entities_group, False, False)
-        if collide != {}:
-            for bullet, entities_group in collide.items():
-                for entities in entities_group:
-                    if type(bullet.maker) != type(entities) and entities not in bullet.already_hit and entities.action != "hurt":
-                        bullet.already_hit.append(entities)
-                        entities.health_reduce(bullet.damage)
-
-                        # if self.game.debug_mode is True :
-                        #     print(f"Bullet from {bullet.maker.name} hit Enemy {entities.name}! : {entities.health}")

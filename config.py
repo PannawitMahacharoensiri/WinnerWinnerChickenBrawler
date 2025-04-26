@@ -49,24 +49,44 @@ class Config:
         return new_window
 
     @staticmethod
-    def check_boundary(corner_position, entities_size, screen_info, screen_start):
+    def check_entities_overlay(entities, new_position, old_position):
+        valid_x = new_position[0]
+        valid_y = new_position[1]
+
+        for each_one in entities.game.entities_group:
+            if each_one != entities:
+                if (each_one.rect.x < entities.rect.center[0] < each_one.rect.x + each_one.size and
+                    each_one.rect.y < entities.rect.center[1] < each_one.rect.y + each_one.size):
+                    valid_x = old_position[0]
+                    valid_y = old_position[1]
+        return valid_x, valid_y
+
+    @staticmethod
+    def check_boundary(entities, screen_info, screen_start, old_position):
         # Save position, if the value not exceed boundaries can just use the start position
-        valid_x = corner_position[0]
-        valid_y = corner_position[1]
+        valid_x = entities.rect.x
+        valid_y = entities.rect.y
+        hit_wall = False
 
         # Check then set new position x
-        if corner_position[0] <= 0 + screen_start[0]:
-            valid_x = 0 + screen_start[0]
-        elif corner_position[0]+ entities_size >= screen_info[0] + screen_start[0]:
-            valid_x = screen_info[0] + screen_start[0] -entities_size
+        if entities.rect.x <= 0 + screen_start[0]:
+            hit_wall = True
+            valid_x = old_position[0]#0 + screen_start[0]
+        elif entities.rect.x + entities.size >= screen_info[0] + screen_start[0]:
+            hit_wall = True
+            valid_x = old_position[0] #screen_info[0] + screen_start[0] - entities.size
 
         # Check then set new position y
-        if corner_position[1] <= 0 + screen_start[1]:
-            valid_y = 0 + screen_start[1]
-        elif corner_position[1]+ entities_size >= screen_info[1] + screen_start[1]:
-            valid_y = screen_info[1] + screen_start[1] - entities_size
+        if entities.rect.y <= 0 + screen_start[1]:
+            hit_wall = True
+            valid_y = old_position[1] #0 + screen_start[1]
+        elif entities.rect.y + entities.size >= screen_info[1] + screen_start[1]:
+            hit_wall = True
+            valid_y = old_position[1] #screen_info[1] + screen_start[1] - entities.size
 
-        return valid_x,valid_y
+        valid_x, valid_y = Config.check_entities_overlay(entities, (valid_x, valid_y), old_position)
+
+        return valid_x, valid_y, hit_wall
 
     @staticmethod
     def get_degree(A,B):
@@ -153,3 +173,37 @@ class Config:
             y = -(attack_height/2) -(maker_size/2)
 
         return [x,y]
+
+    @staticmethod
+    def check_collision(attack_group, entities_group):
+        collide = pygame.sprite.groupcollide(attack_group, entities_group, False, False)
+        if collide != {}:
+            for bullet, entities_group in collide.items():
+                for entities in entities_group:
+                    if (type(bullet.maker) != type(entities) and entities not in bullet.already_hit
+                            and entities.action != "hurt" and entities.cooldown["hurt"] == 0):
+                        entities.health_reduce(bullet.damage)
+                        entities.cooldown["hurt"] = 5
+                        bullet.already_hit.append(entities)
+
+
+class EntitiesGroup(pygame.sprite.Group):
+
+    """
+    DRAW SPRITE IN ORDER(Y-value)
+        how it works : modify build-in class(pygame.sprite.Group) to add more behaviour to draw function of it
+    CREDIT:
+        Author(stackoverflow account) : sloth
+        from post : https://stackoverflow.com/questions/55233448/pygame-overlapping-sprites-draw
+                -order-based-on-location
+    """
+
+    @staticmethod
+    def get_y(entities):
+        return entities.rect.y
+
+    def draw(self, surface):
+        sprites = self.sprites()
+        surface_blit = surface.blit
+        for entity in sorted(sprites, key=self.get_y):
+            self.spritedict[entity] = surface_blit(entity.image, entity.rect)

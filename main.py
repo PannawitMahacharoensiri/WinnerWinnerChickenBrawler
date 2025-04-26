@@ -1,11 +1,10 @@
 from chickfight_player import Player
 from event_handle import event_object
 from Sprite_handle import *
-from config import Config
+from config import *
 import pygame
 import math
 from game_states import *
-from Enemy import *
 
 class Main:
     def __init__(self):
@@ -15,7 +14,7 @@ class Main:
         self.clock = pygame.time.Clock()
         self.program_running = True
         self.player = None
-        self.entities_group = pygame.sprite.Group()
+        self.entities_group = EntitiesGroup()
         self.attack_group = pygame.sprite.Group()
 
         self.debug_mode = True
@@ -29,7 +28,8 @@ class Main:
 
         pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.game_state = dict()
-        self.current_state = None
+        self.current_state = "Menu"
+        self.all_frame = 0
 
     def get_frame(self):
         frame = 0
@@ -39,9 +39,9 @@ class Main:
         return frame
 
     def change_state(self, event):
-        if len(event.key_press) != 0:
+        if self.current_state == "Menu" and event.key_press != set():
             self.current_state = "Gameplay"
-        if event.is_keypress(pygame.K_e):
+        if self.current_state == "Gameplay" and event.is_keypress(pygame.K_e):
             self.current_state = "Menu"
 
     def change_sprite_scale(self):
@@ -64,65 +64,52 @@ class Main:
                 each_attack.change_scale(self.screen_scale)
                 each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
-            # each.rect.x *= self.screen_scale
-            # each.rect.y *= self.screen_scaled
-
         # reset the value
         self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
-        background = pygame.transform.scale(pygame.image.load("sprites\\grass.jpg"),
-                                            self.screen_info)  # depend on game state
+        background = pygame.transform.scale(pygame.image.load("sprites\\grass.jpg"),self.screen_info)  # depend on game state
 
-        player = Player(self.screen_info, game = self, name="jim")
-        jokey = Boss1((450,250),game = self, name = "jokey")
-        self.player = player
+        ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
+        self.player = Player(self.screen_info, game = self, name="jim")
         self.entities_group.add(self.player)
-        # self.entities_group.add(chicken_jokey)
-        self.entities_group.add(jokey)
 
-        self.game_state["Menu"] = MainMenu(self)
+        self.game_state["Menu"] = Menu(self)
         self.game_state["Gameplay"] = Gameplay(self, background)
-        self.current_state = "Menu"
 
         while self.program_running:
+            self.tracker2 = pygame.time.get_ticks()
+            frame = self.get_frame()
+            self.all_frame += frame
+
+            ##KEYPRESS OF MAINLOOP
             keys = pygame.key.get_pressed()
+            if event_object.quit_press():
+                self.program_running = False
             if event_object.is_keypress(pygame.K_q):
                 show_health = []
                 for i in self.entities_group.sprites():
                     show_health.append(i.health)
                 print(show_health)
-            self.tracker2 = pygame.time.get_ticks()
-            # event_object.update_event(self)
-
             if keys[pygame.K_LSHIFT] and event_object.is_keypress(pygame.K_1):
                 if self.debug_mode is True:
                     self.debug_mode = False
                 else :
                     self.debug_mode = True
-
-
-            # print(self.tracker1, "||||||||||||||" ,self.tracker2)
-            # print(f"FPS: {self.clock.get_fps():.2f}")
-            # frame update calculate
-            frame = self.get_frame()
-            self.change_state(event_object)
-            self.game_state[self.current_state].update_screen(frame)
-            self.game_state[self.current_state].draw_screen()
-
             if self.current_state == "Gameplay":
                 if self.debug_mode is True:
                     Config.open_debug(self.window, self.player, event_object.mouse_position)
 
-            if event_object.quit_press():
-                self.program_running = False
+            self.change_state(event_object)
+            self.game_state[self.current_state].update_screen(frame)
+            self.game_state[self.current_state].draw_screen()
 
             event_object.update_event(self)
             self.clock.tick(60)
             if True in self.change_size.values() :
                 self.change_sprite_scale()
-
             pygame.display.update()
+
         pygame.quit()
 
 

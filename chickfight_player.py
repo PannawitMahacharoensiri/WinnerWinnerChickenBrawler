@@ -14,7 +14,7 @@ class Player(pygame.sprite.Sprite):
                    "walk": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
                    "attack1": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
                    "attack2": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
-                   "hurt": [[1, 0, 1, 16, 16], [1, 0, 1, 16, 16], [1, 0, 1, 16, 16], [1, 0, 1, 16, 16]]}
+                   "hurt": [[1, 0, 2, 16, 16], [1, 0, 2, 16, 16], [1, 0, 2, 16, 16], [1, 0, 2, 16, 16]]}
 
     def __init__(self, position, game, name='Player',health=100.0):
         super().__init__()
@@ -48,6 +48,7 @@ class Player(pygame.sprite.Sprite):
 
         self.velocity = [0,0]
         self.atk_pos = (0,0)
+        self.cooldown = {"hurt": 0}
 
     def load_sprite(self, sprites_key):
         player_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
@@ -61,7 +62,7 @@ class Player(pygame.sprite.Sprite):
         self.animation = player_sprite_sheet.pack_sprite(sprites_key, self.game.screen_scale)
         ## REUSE CONTAINTER FOR LATER FUNCTION
         # ASK FOR SPRITE KEY TO GET THE SIZE OF
-        self.size = self.game.screen_scale * sprites_key["idle"][0][4]
+        self.size = self.game.screen_scale * sprites_key["idle"][0][3]
         self.image = self.animation[self.action][self.direction][self.frame_animation]
         self.rect = self.image.get_rect()
     """
@@ -72,9 +73,15 @@ class Player(pygame.sprite.Sprite):
         3 : EAST, RIGHT
     """
 
+    def update_by_frame(self, frame):
+        for keys,values in self.cooldown.items():
+            if values > 0:
+                self.cooldown[keys] -= frame
+        self.frame_animation += frame
+
     def update(self, frame, atk_group, event=None):
 
-        self.frame_animation += frame
+        self.update_by_frame(frame)
 
         move_pos = [0,0]
         # pygame.KEYDOWN
@@ -204,6 +211,7 @@ class Player(pygame.sprite.Sprite):
         return False
 
     def movement(self, move_pos):
+        before_move = (self.rect.x, self.rect.y)
         if move_pos != [0,0]:
             if (abs(self.velocity[0])+self.acceleration >= Player.max_velocity or
             abs(self.velocity[1])+self.acceleration >= Player.max_velocity):
@@ -235,7 +243,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.velocity[1]
 
         # Reset value when it exceeds boundaries
-        self.rect.x, self.rect.y = Config.check_boundary((self.rect.x,self.rect.y), self.size, self.game.screen_info, self.game.screen_start)
+        self.rect.x, self.rect.y, hit_wall = Config.check_boundary(self, self.game.screen_info, self.game.screen_start, before_move)
 
 
     def attack(self, atk_group):
