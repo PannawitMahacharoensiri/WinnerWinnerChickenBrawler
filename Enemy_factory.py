@@ -12,6 +12,7 @@ class BossFactory:
         if game_level == 0 and len(self.game.entities_group) <= 1:
             DummyKUNG = Dummy((450,250), game=self.game)
             self.game.entities_group.add(DummyKUNG)
+            self.game.game_state[self.game.current_state].hostile = DummyKUNG
             self.already_create = True
 
         if game_level == 1 and len(self.game.entities_group) <= 1:

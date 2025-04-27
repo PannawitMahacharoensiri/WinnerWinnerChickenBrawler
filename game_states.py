@@ -1,6 +1,6 @@
 import pygame
 from config import Config
-from event_handle import event_object
+from event_handle import event_object, Widget
 from Enemy_factory import BossFactory
 
 class GameState:
@@ -8,52 +8,105 @@ class GameState:
         self.game = game # game object
         self.current_level = 0
         self.game_level = None
+        self.button_list = []
 
-    def draw_screen(self):
+    def draw_screen(self, frame, event):
         pass
 
     def clean_state(self):
         pass
 
+########################################################################################################################
+
 class Menu(GameState):
     def __init__(self, game):
         super().__init__(game)
         self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2}
+        self.load_asset()
 
-    def draw_screen(self):
-        self.game.window.fill((0, 0, 100))
-        font = pygame.font.SysFont(None, 72)
-        text = font.render("Main Menu", True, (255, 255, 255))
-        text2 = font.render("Press any button to continue", True, (255, 255, 255))
-        self.game.window.blit(text, (250, 250))
-        self.game.window.blit(text2, (50,350))
-        if self.game.debug_mode is True:
-            font_small = pygame.font.SysFont(None, 40)
-            tell_debug = font_small.render("Debug mode", False, (255, 255, 255))
-            self.game.window.blit(tell_debug, (50, 100))
+    def load_asset(self):
+        self.button_list.append(Widget("menu_start_game" , self.game, (65,52), (136,22),
+                                   0, "Start", widget_type="button"))
+        self.button_list.append(Widget("menu_2" , self.game, (65,90), (136,22),
+                                   0, "2", widget_type="button"))
 
 
-    def update_screen(self, frame):
-        pass
+    def draw_screen(self, frame, event):
+            # self.game.window.fill((0,0,0))
+        for button in self.button_list:
+            button.draw(self.game.window, self.current_level)
+        # elif self.current_level == 2:
+        #     self.game.window.fill((0, 0, 100))
+        #     font = pygame.font.SysFont(None, 72)
+        #     text = font.render("Main Menu", True, (255, 255, 255))
+        #     text2 = font.render("Press any button to continue", True, (255, 255, 255))
+        #     self.game.window.blit(text, (250, 250))
+        #     self.game.window.blit(text2, (50,350))
+        #     if self.game.debug_mode is True:
+        #         font_small = pygame.font.SysFont(None, 40)
+        #         tell_debug = font_small.render("Debug mode", False, (255, 255, 255))
+        #         self.game.window.blit(tell_debug, (50, 100))
 
+
+    def update_screen(self, frame, event):
+        for button in self.button_list:
+            button.update(event, self.current_level)
+            if button.action is True:
+                self.input_handle(button.name)
+
+
+    def input_handle(self, button_name):
+        if button_name == "menu_start_game":
+            self.game.current_state = "Gameplay"
+        elif button_name == "menu_2":
+            print("2")
+        # if self.game.current_state == "Menu" :
+        #     self.game.current_state = "Gameplay"
+
+
+########################################################################################################################
 
 class Gameplay(GameState):
     def __init__(self, game, bg):
         super().__init__(game)
         self.background = bg
         self.game_level = {"dummy":0, "Boss1":1, "Boss2":2, "Boss3":3}
+        self.hostile = None
         self.enemy_factory = BossFactory(game)
+        self.load_asset()
 
-    def draw_screen(self):
+    def load_asset(self):
+        self.button_list.append(Widget("Gameplay_go_next", self.game, (238, 124), (12, 12),
+                                       0, "GO", widget_type="button"))
+
+
+
+    def draw_screen(self,frame, event):
         # FILL COLOR OUTSIDE BORDER
         self.game.window.fill((0, 0, 0))
         self.game.window.blit(pygame.transform.scale(self.background, self.game.screen_info), self.game.screen_start)
         self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
+        for button in self.button_list:
+            button.draw(self.game.window, self.current_level)
 
-    def update_screen(self, frame):
+    def update_screen(self, frame, event):
+        self.key_handle(event)
+        for button in self.button_list:
+            button.update(event, self.current_level)
+            if button.action is True:
+                self.input_handle(button.name)
         self.enemy_factory.create_boss(self.current_level)
         self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
-        Config.check_collision(self.game.attack_group, self.game.entities_group)
+        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
+
+    def key_handle(self, event):
+        if self.game.current_state == "Gameplay" and event.is_keypress(pygame.K_e):
+            self.game.current_state = "Menu"
+
+    def input_handle(self, button_name):
+        if button_name == "Gameplay_go_next":
+            self.game.entities_group.remove(self.hostile)
+            self.game_level = 1
 

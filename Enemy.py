@@ -24,6 +24,8 @@ class Enemy(pygame.sprite.Sprite):
         Enemy_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
         self.animation = Enemy_sprite_sheet.pack_sprite(sprites_key, self.game.screen_scale)
         self.size = self.game.screen_scale * sprites_key["idle"][0][3]
+        if self.frame_animation > len(self.animation[self.action][self.direction])-1:
+            self.frame_animation = 0
         self.image = self.animation[self.action][self.direction][self.frame_animation]
         self.rect = self.image.get_rect()
 

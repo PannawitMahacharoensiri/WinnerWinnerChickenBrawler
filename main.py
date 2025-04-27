@@ -64,6 +64,8 @@ class Main:
                 each_attack.change_scale(self.screen_scale)
                 each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
+            for each_button in self.game_state[self.current_state].button_list:
+                each_button.widget_setting()
         # reset the value
         self.change_size = {"window":False, "screen":False}
 
@@ -100,9 +102,9 @@ class Main:
                 if self.debug_mode is True:
                     Config.open_debug(self.window, self.player, event_object.mouse_position)
 
-            self.change_state(event_object)
-            self.game_state[self.current_state].update_screen(frame)
-            self.game_state[self.current_state].draw_screen()
+            # self.change_state(event_object)
+            self.game_state[self.current_state].update_screen(frame, event_object)
+            self.game_state[self.current_state].draw_screen(frame, event_object)
 
             event_object.update_event(self)
             self.clock.tick(60)

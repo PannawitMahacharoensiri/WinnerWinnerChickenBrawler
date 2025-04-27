@@ -175,7 +175,7 @@ class Config:
         return [x,y]
 
     @staticmethod
-    def check_collision(attack_group, entities_group):
+    def check_attack_collision(attack_group, entities_group):
         collide = pygame.sprite.groupcollide(attack_group, entities_group, False, False)
         if collide != {}:
             for bullet, entities_group in collide.items():
