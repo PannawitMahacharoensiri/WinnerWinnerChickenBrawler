@@ -38,12 +38,6 @@ class Main:
             self.tracker1 = self.tracker2
         return frame
 
-    def change_state(self, event):
-        if self.current_state == "Menu" and event.key_press != set():
-            self.current_state = "Gameplay"
-        if self.current_state == "Gameplay" and event.is_keypress(pygame.K_e):
-            self.current_state = "Menu"
-
     def change_sprite_scale(self):
         # print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
         if self.change_size["window"] is True:
@@ -64,8 +58,11 @@ class Main:
                 each_attack.change_scale(self.screen_scale)
                 each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
-            for each_button in self.game_state[self.current_state].button_list:
-                each_button.widget_setting()
+            ## UPDATE TO EVERY STATE NOW
+            for each_state in self.game_state.values():
+                if len(each_state.button_list) != 0:
+                    for each_button in each_state.button_list:
+                        each_button.widget_setting()
         # reset the value
         self.change_size = {"window":False, "screen":False}
 

@@ -10,13 +10,13 @@ class BossFactory:
             return
 
         if game_level == 0 and len(self.game.entities_group) <= 1:
-            DummyKUNG = Dummy((450,250), game=self.game)
+            DummyKUNG = Dummy((self.game.screen_info[0]/2 ,self.game.screen_info[1]/2), game=self.game)
             self.game.entities_group.add(DummyKUNG)
             self.game.game_state[self.game.current_state].hostile = DummyKUNG
             self.already_create = True
 
         if game_level == 1 and len(self.game.entities_group) <= 1:
-            jokey = Boss1((450, 250), game=self.game, name="jokey")
+            jokey = Boss1((self.game.screen_info[0]/2 ,self.game.screen_info[1]/2), game=self.game, name="jokey")
             self.game.entities_group.add(jokey)
             self.already_create = True
 

@@ -7,7 +7,7 @@ class GameState:
     def __init__(self, game):
         self.game = game # game object
         self.current_level = 0
-        self.game_level = None
+        # self.game_level = None
         self.button_list = []
 
     def draw_screen(self, frame, event):
@@ -21,7 +21,7 @@ class GameState:
 class Menu(GameState):
     def __init__(self, game):
         super().__init__(game)
-        self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2}
+        # self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2}
         self.load_asset()
 
     def load_asset(self):
@@ -70,7 +70,7 @@ class Gameplay(GameState):
     def __init__(self, game, bg):
         super().__init__(game)
         self.background = bg
-        self.game_level = {"dummy":0, "Boss1":1, "Boss2":2, "Boss3":3}
+        # self.game_level = {"dummy":0, "Boss1":1, "Boss2":2, "Boss3":3}
         self.hostile = None
         self.enemy_factory = BossFactory(game)
         self.load_asset()
@@ -108,5 +108,6 @@ class Gameplay(GameState):
     def input_handle(self, button_name):
         if button_name == "Gameplay_go_next":
             self.game.entities_group.remove(self.hostile)
-            self.game_level = 1
+            self.current_level = 1
+            self.enemy_factory.already_create = False
 

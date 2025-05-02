@@ -84,8 +84,6 @@ class Config:
             hit_wall = True
             valid_y = old_position[1] #screen_info[1] + screen_start[1] - entities.size
 
-        valid_x, valid_y = Config.check_entities_overlay(entities, (valid_x, valid_y), old_position)
-
         return valid_x, valid_y, hit_wall
 
     @staticmethod
@@ -116,13 +114,13 @@ class Config:
     def check_4direction(degree):
         angle_is = None
         if 135 <= degree <= 180 or -180 <= degree <= -135:
-            angle_is = "W"
+            angle_is = "E"
         elif 45 <= degree <= 135:
             angle_is = "N"
         elif -135 <= degree <= -45:
             angle_is = "S"
         elif 0 <= degree <= 45 or -45 <= degree <= 0:
-            angle_is = "E"
+            angle_is = "W"
         return angle_is
 
     @staticmethod
@@ -147,29 +145,29 @@ class Config:
         return angle_is
 
     @staticmethod
-    def direction_position(angle, attack_height, maker_size):
+    def shift_position(angle, attack_width, attack_height, maker_size):
         x = 0
         y = 0
 
         if angle == "N":
             y = -(attack_height/2) -(maker_size/2)
         elif angle == "E":
-            x = (attack_height/2) + (maker_size/2)
+            x = (attack_width/2) + (maker_size/2)
         elif angle == "W":
-            x =  - attack_height/2 - maker_size/2
+            x =  - attack_width/2 - maker_size/2
         elif angle == "S":
             y = attack_height/2 + maker_size/2
         elif angle == "NE":
-            x = (attack_height / 2) + (maker_size / 2)
+            x = (attack_width / 2) + (maker_size / 2)
             y = -(attack_height/2) -(maker_size/2)
         elif angle == "SE":
-            x = (attack_height / 2) + (maker_size / 2)
+            x = (attack_width / 2) + (maker_size / 2)
             y = attack_height / 2 + maker_size / 2
         elif angle == "SW":
-            x = - attack_height/2 - maker_size/2
+            x = - attack_width/2 - maker_size/2
             y = attack_height / 2 + maker_size / 2
         elif angle == "NW":
-            x = - attack_height/2 - maker_size/2
+            x = - attack_width/2 - maker_size/2
             y = -(attack_height/2) -(maker_size/2)
 
         return [x,y]
