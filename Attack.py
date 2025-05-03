@@ -21,6 +21,8 @@ class Attack(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.size = self.rect.width
 
+        self.old_position = (0,0)
+
         self.bullet_direction = [0,0]
         self.bullet_speed = bullet_speed
         self.already_hit = []
@@ -32,11 +34,11 @@ class Attack(pygame.sprite.Sprite):
 
         # simple bullet
         if self.attack_type == 'bullet':
-            old_pos = (self.rect.x, self.rect.y)
+            self.old_position = (self.rect.x, self.rect.y)
             self.rect.center = (self.rect.center[0] + (self.bullet_direction[0]*self.bullet_speed),
                                 self.rect.center[1] + (self.bullet_direction[1]*self.bullet_speed))
             self.rect.x, self.rect.y , hit_wall = Config.check_boundary(self, self.maker.game.screen_info,
-                                                                        self.maker.game.screen_start, old_pos)
+                                                                        self.maker.game.screen_start)
             if hit_wall is True:
                 self.bullet_speed = 0
         self.delete_atk(atk_group)

@@ -42,6 +42,13 @@ class Config:
         return [change_scale, valid_screen_info, valid_scale]
 
     @staticmethod
+    def get_length(start_pos, end_pos):
+        dx = end_pos[0] - start_pos[0]
+        dy = end_pos[1] - start_pos[1]
+        length = math.sqrt(dx ** 2 + dy ** 2)
+        return length, dx, dy
+
+    @staticmethod
     def window_to_screen(window, screen):
         new_window = window
         if window[0] < screen[0] or window[1] < screen[1]:
@@ -62,7 +69,7 @@ class Config:
         return valid_x, valid_y
 
     @staticmethod
-    def check_boundary(entities, screen_info, screen_start, old_position):
+    def check_boundary(entities, screen_info, screen_start):
         # Save position, if the value not exceed boundaries can just use the start position
         valid_x = entities.rect.x
         valid_y = entities.rect.y
@@ -71,18 +78,18 @@ class Config:
         # Check then set new position x
         if entities.rect.x <= 0 + screen_start[0]:
             hit_wall = True
-            valid_x = old_position[0]#0 + screen_start[0]
+            valid_x = 0 + screen_start[0]
         elif entities.rect.x + entities.size >= screen_info[0] + screen_start[0]:
             hit_wall = True
-            valid_x = old_position[0] #screen_info[0] + screen_start[0] - entities.size
+            valid_x = screen_info[0] + screen_start[0] - entities.size
 
         # Check then set new position y
         if entities.rect.y <= 0 + screen_start[1]:
             hit_wall = True
-            valid_y = old_position[1] #0 + screen_start[1]
+            valid_y = 0 + screen_start[1]
         elif entities.rect.y + entities.size >= screen_info[1] + screen_start[1]:
             hit_wall = True
-            valid_y = old_position[1] #screen_info[1] + screen_start[1] - entities.size
+            valid_y = screen_info[1] + screen_start[1] - entities.size
 
         return valid_x, valid_y, hit_wall
 
@@ -93,6 +100,10 @@ class Config:
             angle_degree = int(angle * 180 / math.pi)
             return angle_degree
         print("Can't compute none x,y value")
+
+    # @staticmethod
+    # def bounce(frame, position, direction):
+
 
     @staticmethod
     def open_debug(screen, A, B):
@@ -181,7 +192,6 @@ class Config:
                     if (type(bullet.maker) != type(entities) and entities not in bullet.already_hit
                             and entities.action != "hurt" and entities.cooldown["hurt"] == 0):
                         entities.health_reduce(bullet.damage)
-                        entities.cooldown["hurt"] = 5
                         bullet.already_hit.append(entities)
 
 

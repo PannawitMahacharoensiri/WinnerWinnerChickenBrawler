@@ -1,3 +1,4 @@
+import math
 import random
 
 import pygame
@@ -35,10 +36,14 @@ class Player(pygame.sprite.Sprite):
         self.image = None
         self.rect = None
 
+        self.max_velocity = 4
+        self.acceleration = 0.2
+        self.deceleration_ratio = 0.4
+
         self.frame_animation = 0
         self.action = 'idle'
         self.loop_action = False
-        self.direction = 0
+        self.facing = 0
         """ Direction 
             0 : NORTH
             1 : WEST(left)
@@ -51,12 +56,14 @@ class Player(pygame.sprite.Sprite):
         ### MANUAL UPDATE SIZE
         # self.rect.width = 50
         # self.rect.height = 50
-        self.rect.center = (20, position[1] // 2)
+        self.old_position = (0,0)
+        self.atk_pos = (0, 0)
+        self.rect.center = (self.size/2, position[1] // 2)
         # self.rect.y = position[1]//2
 
         self.velocity = [0,0]
-        self.atk_pos = (0,0)
         self.cooldown = {"hurt": 0}
+        self.charge = {"bounce":0}
 
     def load_sprite(self, sprites_key):
         player_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
@@ -68,12 +75,13 @@ class Player(pygame.sprite.Sprite):
     def health_reduce(self, bullet_damage):
         self.health -= bullet_damage
         self.action = "hurt"
+        self.cooldown["hurt"] = 5
         self.frame_animation = 0
 
     def update(self, frame, atk_group, event=None):
         self.frame_update(frame)
         move_pos = self.player_key_handle(event)
-        if self.action not in ["attack1","attack2"]:
+        if self.action not in ["attack1","attack2","hurt"]:
             if move_pos != [0,0] or self.velocity != [0,0]:
                 self.action = "walk"
                 self.loop_action = True
@@ -98,27 +106,59 @@ class Player(pygame.sprite.Sprite):
 
         if self.action not in ["attack1",'attack2']:
             if event.is_keypress(pygame.K_w):
-                self.direction = 0
+                self.facing = 0
             elif event.is_keypress(pygame.K_a):
-                self.direction = 1
+                self.facing = 1
             elif event.is_keypress(pygame.K_s):
-                self.direction = 2
+                self.facing = 2
             elif event.is_keypress(pygame.K_d):
-                self.direction = 3
+                self.facing = 3
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            move_pos[0] = -1
-        if keys[pygame.K_d]:
-            move_pos[0] = 1
-        if keys[pygame.K_w]:
-            move_pos[1] = -1
-        if keys[pygame.K_s]:
-            move_pos[1] = 1
+        if self.facing == 3:
+            if keys[pygame.K_a]:
+                move_pos[0] = -1
+            if keys[pygame.K_d]:
+                move_pos[0] = 1
+        elif self.facing == 1:
+            if keys[pygame.K_d]:
+                move_pos[0] = 1
+            if keys[pygame.K_a]:
+                move_pos[0] = -1
+        else :
+            if keys[pygame.K_a]:
+                move_pos[0] -= 1
+            if keys[pygame.K_d]:
+                move_pos[0] += 1
+
+        if self.facing == 2:
+            if keys[pygame.K_w]:
+                move_pos[1] = -1
+            if keys[pygame.K_s]:
+                move_pos[1] = 1
+        elif self.facing == 0:
+            if keys[pygame.K_s]:
+                move_pos[1] = 1
+            if keys[pygame.K_w]:
+                move_pos[1] = -1
+        else :
+            if keys[pygame.K_w]:
+                move_pos[1] -= 1
+            if keys[pygame.K_s]:
+                move_pos[1] += 1
+
+        if move_pos == [1,0]:
+            self.facing = 3
+        elif move_pos == [-1,0]:
+            self.facing = 1
+        elif move_pos == [0,1]:
+            self.facing = 2
+        elif move_pos == [0,-1]:
+            self.facing = 0
 
         if keys[pygame.K_LSHIFT]:
             self.frame_animation = 1
-            self.image = self.animation['idle'][self.direction][self.frame_animation]
+            self.image = self.animation['idle'][self.facing][self.frame_animation]
 
         if self.action not in ["attack1","attack2"]:
             if event.mouse_click(1):
@@ -134,7 +174,7 @@ class Player(pygame.sprite.Sprite):
 
     def attack(self, atk_group):
         if self.action == 'attack1':
-            if self.frame_animation == len(self.animation[self.action][self.direction]) :
+            if self.frame_animation == len(self.animation[self.action][self.facing]) :
                 atk = Attack("bullet", self, 7 ,(10, 10), self.atk_pos, direction_type=2)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
@@ -142,7 +182,7 @@ class Player(pygame.sprite.Sprite):
                 self.action = 'idle'
                 self.atk_pos = (0, 0)
         elif self.action == 'attack2':
-            if self.frame_animation == len(self.animation[self.action][self.direction])-2 :
+            if self.frame_animation == len(self.animation[self.action][self.facing])-2 :
                 atk = Attack("global", self, 7 ,(2, 2), self.atk_pos)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
@@ -151,55 +191,63 @@ class Player(pygame.sprite.Sprite):
                 self.atk_pos = (0,0)
 
     def movement(self, move_pos):
-        before_move = (self.rect.x, self.rect.y)
+        self.old_position = (self.rect.x, self.rect.y)
         if move_pos != [0,0]:
-            if (abs(self.velocity[0])+self.acceleration >= Player.max_velocity or
-            abs(self.velocity[1])+self.acceleration >= Player.max_velocity):
-                max_velo = Player.max_velocity - Player.acceleration
-                self.velocity[0] = max(-max_velo, min(self.velocity[0], max_velo))
-                self.velocity[1] = max(-max_velo, min(self.velocity[1], max_velo))
+            if (abs(self.velocity[0])+self.acceleration >= self.max_velocity or
+            abs(self.velocity[1])+self.acceleration >= self.max_velocity):
+                limit_velo = self.max_velocity - self.acceleration
+                velo_x = self.velocity[0]
+                velo_y = self.velocity[1]
+
+                if self.velocity[0] > limit_velo:
+                    velo_x = limit_velo
+                elif self.velocity[0] < - limit_velo:
+                    velo_x = - limit_velo
+                if self.velocity[1] > limit_velo:
+                    velo_y = limit_velo
+                elif self.velocity[1] < - limit_velo:
+                    velo_y = - limit_velo
+                self.velocity = [velo_x, velo_y]
             self.velocity[0] += self.acceleration * move_pos[0]
             self.velocity[1] += self.acceleration * move_pos[1]
+
         if 0 in move_pos :
             if move_pos[0] == 0:
                 if self.velocity[0] > 0:
-                    self.velocity[0] -= self.velocity[0] * Player.deceleration_ratio
+                    self.velocity[0] -= self.velocity[0] * self.deceleration_ratio
                 else :
-                    self.velocity[0] += self.velocity[0] * Player.deceleration_ratio * -1
+                    self.velocity[0] += self.velocity[0] * self.deceleration_ratio * -1
+                if abs(self.velocity[0]) <= 0.01:
+                    self.velocity[0] = 0
             if move_pos[1] == 0:
                 if self.velocity[1] > 0:
-                    self.velocity[1] -= self.velocity[1] * Player.deceleration_ratio
+                    self.velocity[1] -= self.velocity[1] * self.deceleration_ratio
                 else :
-                    self.velocity[1] += self.velocity[1] * Player.deceleration_ratio * -1
+                    self.velocity[1] += self.velocity[1] * self.deceleration_ratio * -1
+                if abs(self.velocity[1]) <= 0.01:
+                    self.velocity[1] = 0
 
-        if abs(self.velocity[0])< 0.01:
-            self.velocity[0] = 0
-        if abs(self.velocity[1])< 0.01:
-            self.velocity[1] = 0
-
-        # USE VELOCITY TO MOVE CHARACTER
-        # print(self.velocity)
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
 
         # Reset value when it exceeds boundaries
-        check1_x, check1_y, hit_wall = Config.check_boundary(self, self.game.screen_info, self.game.screen_start,
-                                                             before_move)
-        self.rect.x, self.rect.y = Config.check_entities_overlay(self, (check1_x, check1_y), before_move)
+        check1_x, check1_y, hit_wall = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+        self.rect.x, self.rect.y = Config.check_entities_overlay(self, (check1_x, check1_y),
+                                                                 self.old_position)
 
     def roll(self):
-        if self.direction == 0:
+        if self.facing == 0:
             self.rect.y -= 100
-        elif self.direction  == 1:
+        elif self.facing  == 1:
             self.rect.x -= 100
-        elif self.direction == 2:
+        elif self.facing == 2:
             self.rect.y += 100
-        elif self.direction == 3:
+        elif self.facing == 3:
             self.rect.x += 100
 
     def animated(self):
-        if self.frame_animation > len(self.animation[self.action][self.direction])-1:
+        if self.frame_animation > len(self.animation[self.action][self.facing])-1:
             self.frame_animation = 0
             if self.loop_action is False:
                 self.action = "idle"
-        self.image = self.animation[self.action][self.direction][self.frame_animation]
+        self.image = self.animation[self.action][self.facing][self.frame_animation]

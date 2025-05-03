@@ -92,6 +92,7 @@ class Gameplay(GameState):
 
     def update_screen(self, frame, event):
         self.key_handle(event)
+        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
         for button in self.button_list:
             button.update(event, self.current_level)
             if button.action is True:
@@ -99,7 +100,6 @@ class Gameplay(GameState):
         self.enemy_factory.create_boss(self.current_level)
         self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
-        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
 
     def key_handle(self, event):
         if self.game.current_state == "Gameplay" and event.is_keypress(pygame.K_e):
