@@ -41,7 +41,7 @@ class Attack(pygame.sprite.Sprite):
                                                        * Config.dt_per_second * self.maker.game.screen_scale),
                                 self.rect.center[1] + (self.bullet_direction[1]*self.bullet_speed
                                                        * Config.dt_per_second * self.maker.game.screen_scale))
-            self.rect.x, self.rect.y , hit_wall = Config.check_boundary(self, self.maker.game.screen_info,
+            self.rect.x, self.rect.y , hit_wall, wall_dir = Config.check_boundary(self, self.maker.game.screen_info,
                                                                         self.maker.game.screen_start)
             if hit_wall is True:
                 self.bullet_speed = 0

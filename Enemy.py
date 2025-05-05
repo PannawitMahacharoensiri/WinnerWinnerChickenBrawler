@@ -15,6 +15,7 @@ class Enemy(pygame.sprite.Sprite):
         self.size = 1
         self.action = "idle"
         self.loop_action = False
+        self.death = False
 
         self.facing = 0
         self.frame_animation = 0
@@ -34,24 +35,34 @@ class Enemy(pygame.sprite.Sprite):
 
     #reset charge time
     def health_reduce(self, bullet_damage):
-        if self.action == "dash_attack":
-            self.status = "bounce"
-            self.velocity = [0,0]
-        self.health -= bullet_damage
-        self.action = "hurt"
-        self.cooldown["hurt"] = 5
-        self.frame_animation = 0
+        if self.health > 0:
+            if self.action == "dash_attack":
+                self.status = "bounce"
+                self.velocity = [0,0]
+            self.health -= bullet_damage
+            self.action = "hurt"
+            self.cooldown["hurt"] = 5
+            self.frame_animation = 0
+
+    def life_check(self):
+        if self.health <= 0:
+            self.action = "death"
+
+        if self.action == "death" and self.frame_animation == self.sprites_key["death"][self.facing][0] - 1:
+            self.death = True
 
     def animated(self):
-        if self.frame_animation > len(self.animation[self.action][self.facing])-1:
-            self.frame_animation = 0
-            if self.loop_action is False:
-                self.action = "idle"
+        if self.death is False:
+            if self.frame_animation > len(self.animation[self.action][self.facing])-1:
+                self.frame_animation = 0
+                if self.loop_action is False:
+                    self.action = "idle"
         self.image = self.animation[self.action][self.facing][self.frame_animation]
 
 class Dummy(Enemy):
     sprites_key = {"idle": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
-                   "hurt" : [[1, 1, 1, 16, 16],[2, 1, 1, 16, 16],[2, 1, 1, 16, 16],[2, 1, 1, 16, 16]]}
+                   "hurt" : [[1, 1, 1, 16, 16],[2, 1, 1, 16, 16],[2, 1, 1, 16, 16],[2, 1, 1, 16, 16]],
+                   "death": [[1, 1, 1, 16, 16],[2, 1, 1, 16, 16],[2, 1, 1, 16, 16],[2, 1, 1, 16, 16]]}
 
     def __init__(self, position, game):
         super().__init__()
@@ -80,7 +91,8 @@ class Boss1(Enemy):
                    "attack2": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
                    "dash_attack": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
                    "charge_dash_attack": [[5, 0, 2, 16, 16], [5, 0, 2, 16, 16], [5, 0, 2, 16, 16], [5, 0, 2, 16, 16]],
-                   "hurt" : [[1, 0, 1, 16, 16],[1, 1, 1, 16, 16],[1, 2, 1, 16, 16],[1, 3, 1, 16, 16]]}
+                   "hurt" : [[1, 0, 1, 16, 16],[1, 1, 1, 16, 16],[1, 2, 1, 16, 16],[1, 3, 1, 16, 16]],
+                   "death": [[5,0,3,16,16],[5,0,3,16,16],[5,0,3,16,16],[5,0,3,16,16]]}
 
     ## ONLY FOR READ AND NOT CHANGE THE VALUE SO I NOT PUT IT IN ATTRIBUTE
     attack_move = {"attack1":{"damage":5, "hitbox":(3,3), "cooldown":3},
@@ -91,6 +103,7 @@ class Boss1(Enemy):
         super().__init__()
         self.game = game
         self.name = name
+        self.health = 1
         self.sprite_dir = 'sprites\\Boss1_substitute.png'
         self.size = self.game.screen_scale
         self.load_sprite(Boss1.sprites_key)
@@ -106,13 +119,18 @@ class Boss1(Enemy):
     def update(self, frame, atk_group, event=None):
         self.frame_update(frame)
         self.status_update(frame)
-        if self.action not in [*self.cooldown.keys(),*self.charge.keys()]: #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
+        self.life_check()
+
+        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"]: #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
             self.behaviour(frame)
 
         self.attack(atk_group, frame)
         self.animated()
 
     def status_update(self, frame):
+        if self.death is True:
+            return
+
         if self.status == "bounce":
             self.charge[self.status] += frame
             self.action = "hurt"
@@ -129,13 +147,13 @@ class Boss1(Enemy):
                 self.speed = self.normal_speed
 
     def frame_update(self, frame):
-        for keys,values in self.cooldown.items():
-            if values > 0:
-                self.cooldown[keys] -= frame
-        self.frame_animation += frame
-        self.before_health = self.health
-        self.loop_action = False
-        ## ADD STATUS MECHANIC HEAR
+        if self.death is False:
+            for keys,values in self.cooldown.items():
+                if values > 0:
+                    self.cooldown[keys] -= frame
+            self.frame_animation += frame
+            self.before_health = self.health
+            self.loop_action = False
 
 
     def behaviour(self, frame):
@@ -176,6 +194,9 @@ class Boss1(Enemy):
 
     # WHY YOU NOT CALL IN THE BEHAVIOUR CAUSE THERE ARE SOME DELAY BETWEEN COMMAND TO ATTACK AND REAL BUILD ATK HITBOX
     def attack(self, atk_group, frame):
+        if self.death is True:
+            return
+
 
         if self.action == "attack1" and self.frame_animation == 1 :
             atk = Attack("melee", self, Boss1.attack_move["attack1"]["damage"], Boss1.attack_move["attack1"]["hitbox"], self.atk_pos)

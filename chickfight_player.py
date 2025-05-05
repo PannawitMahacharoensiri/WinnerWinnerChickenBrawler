@@ -30,7 +30,7 @@ class Player(pygame.sprite.Sprite):
         # Animation related
         self.game = game
         self.name = name
-        self.health = 100
+        self.health = 1
         self.sprite_dir = "sprites\\Walk_substitute2.png"
         self.size = self.game.screen_scale
         self.status = None
@@ -75,20 +75,21 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
     def health_reduce(self, bullet_damage):
-        self.health -= bullet_damage
-        self.action = "hurt"
-        self.cooldown["hurt"] = 5
-        self.frame_animation = 0
-        # if self.health <= 0:
-        #     self.action = "death"
+        # only decrese health when not dead
+        if self.health > 0:
+            self.health -= bullet_damage
+            self.action = "hurt"
+            self.cooldown["hurt"] = 5
+            self.frame_animation = 0
 
     def update(self, frame, atk_group, event=None):
+
         self.frame_update(frame)
         self.player_on_entities()
-
+        self.life_check()
         move_pos = self.player_key_handle(event)
         self.status_update(frame)
-        if self.action not in ["attack1","attack2","hurt"]:
+        if self.action not in ["attack1","attack2","hurt", "death"]:
             if move_pos != [0,0] or self.velocity != [0,0]:
                 self.action = "walk"
                 self.loop_action = True
@@ -97,13 +98,17 @@ class Player(pygame.sprite.Sprite):
         self.animated()
 
     def frame_update(self, frame):
-        for keys,values in self.cooldown.items():
-            if values > 0:
-                self.cooldown[keys] -= frame
-        self.frame_animation += frame
-        self.loop_action = False
+        if self.death is False:
+            for keys,values in self.cooldown.items():
+                if values > 0:
+                    self.cooldown[keys] -= frame
+            self.frame_animation += frame
+            self.loop_action = False
 
     def status_update(self, frame):
+        if self.death is True:
+            return
+
         if self.status == "bounce":
             self.charge[self.status] += frame
             self.action = "hurt"
@@ -120,6 +125,13 @@ class Player(pygame.sprite.Sprite):
                 self.charge[self.status] = 0
                 self.status = None
 
+    def life_check(self):
+        if self.health <= 0:
+            self.action = "death"
+
+        if self.action == "death" and self.frame_animation == self.sprites_key["death"][self.facing][0] - 1:
+            self.death = True
+
     def player_on_entities(self):
         for each_one in self.game.entities_group:
             if each_one != self:
@@ -132,10 +144,10 @@ class Player(pygame.sprite.Sprite):
         move_pos = [0,0]
 
         # JUMP OUT FIRST
+        if self.status == "bounce" or self.death is  True:
+            return [0,0]
         if event.is_keypress(pygame.K_SPACE):
             self.roll()
-            return [0,0]
-        if self.status == "bounce":
             return [0,0]
 
         if self.action not in ["attack1",'attack2']:
@@ -209,7 +221,7 @@ class Player(pygame.sprite.Sprite):
     def attack(self, atk_group):
         if self.action == 'attack1':
             if self.frame_animation == len(self.animation[self.action][self.facing]) :
-                atk = Attack("melee", self, 200 ,(10, 10), self.atk_pos, direction_type=1)
+                atk = Attack("bullet", self, 200 ,(10, 10), self.atk_pos, direction_type=2)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
                 # RESET VALUE
@@ -284,8 +296,9 @@ class Player(pygame.sprite.Sprite):
             self.velocity[1] *= -1
 
     def animated(self):
-        if self.frame_animation > len(self.animation[self.action][self.facing])-1:
-            self.frame_animation = 0
-            if self.loop_action is False:
-                self.action = "idle"
+        if self.death is False:
+            if self.frame_animation > len(self.animation[self.action][self.facing])-1:
+                self.frame_animation = 0
+                if self.loop_action is False:
+                    self.action = "idle"
         self.image = self.animation[self.action][self.facing][self.frame_animation]

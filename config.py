@@ -225,7 +225,6 @@ class Config:
 
     @staticmethod
     def check_attack_collision(attack_group, entities_group):
-        dead_list = []
         collide = pygame.sprite.groupcollide(attack_group, entities_group, False, False)
         if collide != {}:
             for bullet, entities_group in collide.items():
@@ -234,9 +233,6 @@ class Config:
                                                 and entities.action != "hurt" and entities.cooldown["hurt"] == 0):
                         entities.health_reduce(bullet.damage)
                         bullet.already_hit.append(entities)
-                    if entities.health <= 0:
-                        dead_list.append(entities)
-        return dead_list
 
 
 class EntitiesGroup(pygame.sprite.Group):

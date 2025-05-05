@@ -96,8 +96,6 @@ class Gameplay(GameState):
 
     def update_state(self, frame, event):
         self.key_handle(event)
-
-        dead_list = Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
         # if len(dead_list) != 0:
         #     for each in dead_list:
         #         if each == self.game.player:
@@ -110,6 +108,8 @@ class Gameplay(GameState):
         self.enemy_factory.create_boss(self.current_level)
         self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
+        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
+
         self.level_handle()
 
 
