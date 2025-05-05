@@ -60,9 +60,10 @@ class Config:
     @staticmethod
     def check_overlay(each_one, entities):
         overlay = False
-        if (each_one.rect.x < entities.rect.center[0] < each_one.rect.x + each_one.size and
-                each_one.rect.y < entities.rect.center[1] < each_one.rect.y + each_one.size):
-            overlay = True
+        if each_one.death is False:
+            if (each_one.rect.x < entities.rect.center[0] < each_one.rect.x + each_one.size and
+                    each_one.rect.y < entities.rect.center[1] < each_one.rect.y + each_one.size):
+                overlay = True
         return overlay
 
     @staticmethod

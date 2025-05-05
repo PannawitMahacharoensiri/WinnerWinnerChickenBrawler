@@ -48,7 +48,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.health <= 0:
             self.action = "death"
 
-        if self.action == "death" and self.frame_animation == self.sprites_key["death"][self.facing][0] - 1:
+        if self.action == "death" and self.frame_animation == self.sprites_key["death"][self.facing][0] - 1 :
             self.death = True
 
     def animated(self):
@@ -92,7 +92,7 @@ class Boss1(Enemy):
                    "dash_attack": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
                    "charge_dash_attack": [[5, 0, 2, 16, 16], [5, 0, 2, 16, 16], [5, 0, 2, 16, 16], [5, 0, 2, 16, 16]],
                    "hurt" : [[1, 0, 1, 16, 16],[1, 1, 1, 16, 16],[1, 2, 1, 16, 16],[1, 3, 1, 16, 16]],
-                   "death": [[5,0,3,16,16],[5,0,3,16,16],[5,0,3,16,16],[5,0,3,16,16]]}
+                   "death": [[6,0,3,16,16],[6,0,3,16,16],[6,0,3,16,16],[6,0,3,16,16]]}
 
     ## ONLY FOR READ AND NOT CHANGE THE VALUE SO I NOT PUT IT IN ATTRIBUTE
     attack_move = {"attack1":{"damage":5, "hitbox":(3,3), "cooldown":3},
@@ -239,7 +239,62 @@ class Boss1(Enemy):
                 self.velocity[1] *= -1 * self.speed
 
 
+class Boss2(Enemy):
+    sprites_key = {"idle": [[5, 0, 0, 16, 25], [5, 0, 0, 16, 25], [5, 0, 0, 16, 25], [5, 0, 0, 16, 25]],
+                   "try_to_run":[[3, 0, 1, 16, 25], [3, 0, 1, 16, 25], [3, 0, 1, 16, 25], [3, 0, 1, 16, 25]],
+                   "attack":[[1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25]]}
 
+
+    def __init__(self, position, game, name):
+        super().__init__()
+        self.game = game
+        self.name = name
+        self.health = 1
+        self.sprite_dir = 'sprites\\Boss2.png'
+        self.size = self.game.screen_scale
+        self.load_sprite(Boss2.sprites_key)
+        self.rect.x = position[0]
+        self.rect.y = position[1]
+        self.cooldown = {"hurt":0, "attack":0, "attack2":0, "dash_attack":0}
+        self.charge = {"charge_dash_attack":0, "bounce":0}
+
+        self.normal_speed = 30 # 2 * 15
+        self.speed = self.normal_speed
+
+    def update(self, frame, atk_group, event=None):
+        self.frame_update(frame)
+
+        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"]:
+            self.behaviour(frame)
+
+        self.attack(atk_group, frame)
+        self.animated()
+
+    def frame_update(self, frame):
+        if self.death is False:
+            for keys,values in self.cooldown.items():
+                if values > 0:
+                    self.cooldown[keys] -= frame
+            self.frame_animation += frame
+            self.before_health = self.health
+            self.loop_action = False
+
+    def behaviour(self, frame):
+        length, dx, dy = Config.get_length(self.rect.center, self.game.player.rect.center)
+        if length > 0 and self.cooldown["attack"]==0:
+            self.action = "attack"
+
+    def attack(self, atk_group, frame):
+        if self.death is True:
+            return
+
+        if self.action == "attack":
+            self.atk_pos = self.game.player.rect.center
+            atk = Attack("bullet", self, Boss1.attack_move["attack1"]["damage"], Boss1.attack_move["attack1"]["hitbox"], self.atk_pos, direction_type=0)
+            atk_group.add(atk)
+            self.action = "idle"
+            self.atk_pos = (0,0)
+            self.frame_animation = 0
 
 
 

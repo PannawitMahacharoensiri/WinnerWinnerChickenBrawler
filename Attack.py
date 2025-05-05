@@ -62,9 +62,25 @@ class Attack(pygame.sprite.Sprite):
             if direction_type == 0:
                 direction = Config.check_4direction(atk_degree)
                 shift_pos = Config.shift_position(direction, self.rect.width, self.rect.height, self.maker.size)
+
+                dx = attack_pos[0] - self.maker.rect.center[0] + shift_pos[0]
+                dy = attack_pos[1] - self.maker.rect.center[1] + shift_pos[1]
+                lenght = math.sqrt(dx ** 2 + dy ** 2)
+                if lenght != 0:
+                    self.bullet_direction = [dx / lenght, dy / lenght]
+                else :
+                    self.bullet_direction = [0,0]
             elif direction_type == 1:
                 direction = Config.check_8direction(atk_degree)
                 shift_pos = Config.shift_position(direction, self.rect.width, self.rect.height, self.maker.size)
+
+                dx = attack_pos[0] - self.maker.rect.center[0] + shift_pos[0]
+                dy = attack_pos[1] - self.maker.rect.center[1] + shift_pos[1]
+                lenght = math.sqrt(dx ** 2 + dy ** 2)
+                if lenght != 0:
+                    self.bullet_direction = [dx / lenght, dy / lenght]
+                else:
+                    self.bullet_direction = [0, 0]
             else :
                 dx = attack_pos[0] - self.maker.rect.center[0]
                 dy = attack_pos[1] - self.maker.rect.center[1]
@@ -84,13 +100,6 @@ class Attack(pygame.sprite.Sprite):
         else :
             if self.decay_time <= 0:
                 group.remove(self)
-        # elif self.attack_type == "global":
-        #     if self.frame_counter == 2:
-        #         group.remove(self)
-        # else :
-        #     if self.frame_counter == 5:
-        #         group.remove(self)
-
 
     def change_scale(self, game_scale):
         self.image = pygame.Surface((self.classic_hitbox[0]*game_scale, self.classic_hitbox[1]*game_scale))

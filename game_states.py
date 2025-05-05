@@ -23,7 +23,7 @@ class GameState:
 class Menu(GameState):
     def __init__(self, game):
         super().__init__(game)
-        # self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2}
+        # self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2, "Game_over":3}
         self.load_asset()
 
     def load_asset(self):
@@ -31,6 +31,8 @@ class Menu(GameState):
                                    0, "Start", widget_type="button"))
         self.button_list.append(Widget("menu_2" , self.game, (65,90), (136,22),
                                    0, "2", widget_type="button"))
+        self.button_list.append(Widget("menu_game_over", self.game, (65,90), (150,20),
+                                       level=3, text="GO to Menu", widget_type="button"))
 
 
     def draw_state(self, frame, event):
@@ -52,6 +54,7 @@ class Menu(GameState):
 
     def update_state(self, frame, event):
         self.key_handle(event)
+        # print(self.game.game_state["Gameplay"].current_level)
 
     def key_handle(self, event):
         ## Check button push
@@ -62,6 +65,9 @@ class Menu(GameState):
                     self.game.current_state = "Gameplay"
                 elif button.name == "menu_2":
                     print("2")
+                elif button.name == "menu_game_over":
+                    print("run")
+                    self.current_level = 0
         ## check key push that relate with the state
         if self.game.current_state == "Menu" and self.current_level == 0 and event.is_keypress(pygame.K_e):
             self.game.current_state = "Gameplay"
@@ -77,7 +83,8 @@ class Gameplay(GameState):
         super().__init__(game)
         self.background = bg
         # self.game_level = {"dummy":0, "Boss1":1, "Boss2":2, "Boss3":3}
-        self.hostile = None
+        self.kill_require = {0:1,1:1,2:1,3:3}
+        self.kill_count = 0
         self.enemy_factory = BossFactory(game)
         self.load_asset()
 
@@ -96,20 +103,13 @@ class Gameplay(GameState):
 
     def update_state(self, frame, event):
         self.key_handle(event)
-        # if len(dead_list) != 0:
-        #     for each in dead_list:
-        #         if each == self.game.player:
-        #             pass
-        #             # print("NOOOOOOOOOO")
-        #         else :
-        #             self.death_list.append(each)
-        #             self.change_level = True
 
         self.enemy_factory.create_boss(self.current_level)
         self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
         Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
 
+        self.check_kill(frame)
         self.level_handle()
 
 
@@ -126,6 +126,33 @@ class Gameplay(GameState):
         if self.game.current_state == "Gameplay" and event.is_keypress(pygame.K_e):
             self.game.current_state = "Menu"
 
+    def check_kill(self, frame):
+        if frame != 1:
+            return
+
+        for each in self.game.entities_group:
+            ## someone death
+            if each.death is True and each not in self.death_list:
+                # print(each.name)
+                if each == self.game.player:
+                    self.game.current_state = "Menu"
+                    self.game.game_state["Menu"].current_level = 3
+                    ## it only change current level of gameplay object not menu
+                    self.current_level = 0
+
+                else :
+                    ## KEY TO CHANGE LEVEL
+                    """
+                    THERE ARE SOME PROBLEM THAT THE ENEMY GOT REMOVE TO FAST BECAUSE THE FRAME THAT ENEMY STATUS UPDATE TO DEATH
+                    IS HAPPEN BEFORE EVEN DRAW THE SCREEN SO THE ANIMATION GOT CUT OUT 1 FRAME THE LAZY WAY TO DEAL WITH IT IS
+                    MAKE DEATH ANIMATION HAS MORE 1 FRAME
+                    """
+                    self.death_list.append(each)
+
+        if len(self.death_list) == self.kill_require[self.current_level]:
+            self.change_level = True
+
+
 
     def level_handle(self):
         if self.change_level is False:
@@ -133,10 +160,18 @@ class Gameplay(GameState):
 
         if self.current_level == 0:
             ## COUNT KILL COUNT ??
-            self.game.entities_group.remove(self.hostile)
+            # self.game.entities_group.remove(self.hostile)
+            for each in self.game.entities_group:
+                if each != self.game.player:
+                    self.game.entities_group.remove(each)
             self.current_level = 1
             self.enemy_factory.already_create = False
             self.change_level = False
             self.game.attack_group.empty()
         elif self.change_level == 1:
-            print("bye")
+            for each in self.death_list:
+                self.death_list.remove(each)
+                self.game.entities_group.remove(each)
+            self.current_level = 2
+            self.enemy_factory.already_create = False
+            self.change_level = False
