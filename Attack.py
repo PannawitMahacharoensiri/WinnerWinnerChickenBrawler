@@ -8,8 +8,8 @@ direction_type = 0: 4-direction , 1: 8-direction, 2: all-direction
 
 class Attack(pygame.sprite.Sprite):
 
-    def __init__(self, attack_type, maker, damage, hit_box, attack_pos, direction_type = 0, bullet_speed = 2,
-                 dash_attack=False):
+    def __init__(self, attack_type, maker, damage, hit_box, attack_pos, decay_time = 2,
+                 direction_type = 0, bullet_speed = 30):
         super().__init__()
         self.attack_type = attack_type
         self.maker = maker
@@ -26,17 +26,21 @@ class Attack(pygame.sprite.Sprite):
         self.bullet_direction = [0,0]
         self.bullet_speed = bullet_speed
         self.already_hit = []
-        self.set_position(attack_pos, direction_type, dash_attack)
+        self.set_position(attack_pos, direction_type)
         self.frame_counter = 0
+        self.decay_time = decay_time
 
     def update(self, frame, atk_group):
         self.frame_counter += frame
+        self.decay_time -= frame
 
         # simple bullet
         if self.attack_type == 'bullet':
             self.old_position = (self.rect.x, self.rect.y)
-            self.rect.center = (self.rect.center[0] + (self.bullet_direction[0]*self.bullet_speed),
-                                self.rect.center[1] + (self.bullet_direction[1]*self.bullet_speed))
+            self.rect.center = (self.rect.center[0] + (self.bullet_direction[0]*self.bullet_speed
+                                                       * Config.dt_per_second * self.maker.game.screen_scale),
+                                self.rect.center[1] + (self.bullet_direction[1]*self.bullet_speed
+                                                       * Config.dt_per_second * self.maker.game.screen_scale))
             self.rect.x, self.rect.y , hit_wall = Config.check_boundary(self, self.maker.game.screen_info,
                                                                         self.maker.game.screen_start)
             if hit_wall is True:
@@ -49,7 +53,7 @@ class Attack(pygame.sprite.Sprite):
         else :
             self.image.set_colorkey((0, 0, 0))
 
-    def set_position(self, attack_pos, direction_type, dash_attack=False):
+    def set_position(self, attack_pos, direction_type):
         if self.attack_type == "global":
             self.rect.center = attack_pos
         else :
@@ -59,7 +63,6 @@ class Attack(pygame.sprite.Sprite):
                 direction = Config.check_4direction(atk_degree)
                 shift_pos = Config.shift_position(direction, self.rect.width, self.rect.height, self.maker.size)
             elif direction_type == 1:
-            ## NOW CHECK THE DIRECTION TYPE, to get real position (call direction for 4,8 | just put as mouse position)
                 direction = Config.check_8direction(atk_degree)
                 shift_pos = Config.shift_position(direction, self.rect.width, self.rect.height, self.maker.size)
             else :
@@ -71,22 +74,22 @@ class Attack(pygame.sprite.Sprite):
                 else :
                     self.bullet_direction = [0,0]
                 shift_pos = [self.bullet_direction[0] * self.maker.size , self.bullet_direction[1] * self.maker.size]
-                if dash_attack is True:
-                    shift_pos = self.bullet_direction
 
-            self.rect.center = (self.maker.rect.center[0] + shift_pos[0],
-                                self.maker.rect.center[1] + shift_pos[1])
+            self.rect.center = (self.maker.rect.center[0] + shift_pos[0],self.maker.rect.center[1] + shift_pos[1])
 
     def delete_atk(self, group):
         if self.attack_type == "bullet":
             if self.bullet_speed == 0:
                 group.remove(self)
-        elif self.attack_type == "global":
-            if self.frame_counter == 2:
-                group.remove(self)
         else :
-            if self.frame_counter == 5:
+            if self.decay_time <= 0:
                 group.remove(self)
+        # elif self.attack_type == "global":
+        #     if self.frame_counter == 2:
+        #         group.remove(self)
+        # else :
+        #     if self.frame_counter == 5:
+        #         group.remove(self)
 
 
     def change_scale(self, game_scale):

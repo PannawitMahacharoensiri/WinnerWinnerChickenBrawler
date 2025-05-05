@@ -73,10 +73,12 @@ class Main:
         self.player = Player(self.screen_info, game = self, name="jim")
         self.entities_group.add(self.player)
 
+        # build state (contain all level all button in that state)
         self.game_state["Menu"] = Menu(self)
         self.game_state["Gameplay"] = Gameplay(self, background)
 
         while self.program_running:
+            self.clock.tick(Config.game_fps)
             self.tracker2 = pygame.time.get_ticks()
             frame = self.get_frame()
             self.all_frame += frame
@@ -100,11 +102,12 @@ class Main:
                     Config.open_debug(self.window, self.player, event_object.mouse_position)
 
             # self.change_state(event_object)
-            self.game_state[self.current_state].update_screen(frame, event_object)
-            self.game_state[self.current_state].draw_screen(frame, event_object)
+            self.game_state[self.current_state].update_state(frame, event_object)
+            self.game_state[self.current_state].draw_state(frame, event_object)
 
             event_object.update_event(self)
-            self.clock.tick(60)
+
+
             if True in self.change_size.values() :
                 self.change_sprite_scale()
             pygame.display.update()

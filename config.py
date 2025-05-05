@@ -2,8 +2,10 @@ import math
 import pygame
 
 class Config:
-    frame_delay = 300
+    game_fps = 60
+    frame_delay = 250
     color = {'black': (0, 0, 0), 'white': (255, 255, 255), 'green':(0, 255, 0)}
+    dt_per_second = (1000/game_fps)/1000
 
     @staticmethod
     def screen_ratio(curr_screen_info, current_scale):
@@ -56,14 +58,22 @@ class Config:
         return new_window
 
     @staticmethod
-    def check_entities_overlay(entities, new_position, old_position):
+    def check_overlay(each_one, entities):
+        overlay = False
+        if (each_one.rect.x < entities.rect.center[0] < each_one.rect.x + each_one.size and
+                each_one.rect.y < entities.rect.center[1] < each_one.rect.y + each_one.size):
+            overlay = True
+        return overlay
+
+    @staticmethod
+    def entities_overlay(entities, new_position, old_position):
         valid_x = new_position[0]
         valid_y = new_position[1]
 
         for each_one in entities.game.entities_group:
             if each_one != entities:
-                if (each_one.rect.x < entities.rect.center[0] < each_one.rect.x + each_one.size and
-                    each_one.rect.y < entities.rect.center[1] < each_one.rect.y + each_one.size):
+                overlay = Config.check_overlay(each_one, entities)
+                if overlay is True:
                     valid_x = old_position[0]
                     valid_y = old_position[1]
         return valid_x, valid_y
@@ -73,37 +83,68 @@ class Config:
         # Save position, if the value not exceed boundaries can just use the start position
         valid_x = entities.rect.x
         valid_y = entities.rect.y
+        wall_direction = None
         hit_wall = False
 
         # Check then set new position x
         if entities.rect.x <= 0 + screen_start[0]:
             hit_wall = True
+            wall_direction = 1
             valid_x = 0 + screen_start[0]
         elif entities.rect.x + entities.size >= screen_info[0] + screen_start[0]:
             hit_wall = True
+            wall_direction = 2
             valid_x = screen_info[0] + screen_start[0] - entities.size
 
         # Check then set new position y
         if entities.rect.y <= 0 + screen_start[1]:
             hit_wall = True
+            wall_direction = 0
             valid_y = 0 + screen_start[1]
         elif entities.rect.y + entities.size >= screen_info[1] + screen_start[1]:
             hit_wall = True
+            wall_direction = 2
             valid_y = screen_info[1] + screen_start[1] - entities.size
 
-        return valid_x, valid_y, hit_wall
+        return valid_x, valid_y, hit_wall, wall_direction
 
     @staticmethod
     def get_degree(A,B):
-        if len(A) == 2 and len(B) == 2:
+        if len(A) == 2 and len(B) == 2 :
+            if not all(isinstance(each, (int, float)) for each in A):
+                return 0
+            if not all(isinstance(each, (int, float)) for each in B):
+                return 0
             angle = math.atan2(A[1] - B[1], A[0] - B[0])
             angle_degree = int(angle * 180 / math.pi)
             return angle_degree
-        print("Can't compute none x,y value")
+        return 0
 
-    # @staticmethod
-    # def bounce(frame, position, direction):
+    @staticmethod
+    def bounce(frame, velocity, facing, size):
+        if abs(velocity[0]) <= size/5:
+            velocity[0] = 0
+        if abs(velocity[1]) <= size/5:
+            velocity[1] = 0
 
+        new_velocity = [0,0]
+        if velocity != [0,0]:
+            if frame == 0:
+                new_velocity[0] = velocity[0]/2
+                new_velocity[1] = velocity[1]/2
+            elif frame == 1:
+                new_velocity[0] = velocity[0]/3
+                new_velocity[1] = velocity[1]/3
+        else :
+            if facing == 0:
+                new_velocity[1] = size/2
+            elif facing == 2:
+                new_velocity[1] = - size/ 2
+            elif facing == 1:
+                new_velocity[0] = size/ 2
+            elif facing == 3 :
+                new_velocity[0] = - size/ 2
+        return new_velocity
 
     @staticmethod
     def open_debug(screen, A, B):
@@ -180,19 +221,22 @@ class Config:
         elif angle == "NW":
             x = - attack_width/2 - maker_size/2
             y = -(attack_height/2) -(maker_size/2)
-
         return [x,y]
 
     @staticmethod
     def check_attack_collision(attack_group, entities_group):
+        dead_list = []
         collide = pygame.sprite.groupcollide(attack_group, entities_group, False, False)
         if collide != {}:
             for bullet, entities_group in collide.items():
                 for entities in entities_group:
                     if (type(bullet.maker) != type(entities) and entities not in bullet.already_hit
-                            and entities.action != "hurt" and entities.cooldown["hurt"] == 0):
+                                                and entities.action != "hurt" and entities.cooldown["hurt"] == 0):
                         entities.health_reduce(bullet.damage)
                         bullet.already_hit.append(entities)
+                    if entities.health <= 0:
+                        dead_list.append(entities)
+        return dead_list
 
 
 class EntitiesGroup(pygame.sprite.Group):

@@ -34,6 +34,9 @@ class Enemy(pygame.sprite.Sprite):
 
     #reset charge time
     def health_reduce(self, bullet_damage):
+        if self.action == "dash_attack":
+            self.status = "bounce"
+            self.velocity = [0,0]
         self.health -= bullet_damage
         self.action = "hurt"
         self.cooldown["hurt"] = 5
@@ -54,7 +57,7 @@ class Dummy(Enemy):
         super().__init__()
         self.sprite_dir = 'sprites\\Dummy_demo.png'
         self.game = game
-        self.health = 0
+        self.health = 1000
         self.name = "__DUMMY08"
         self.cooldown = {"hurt": 0}
         self.load_sprite(Dummy.sprites_key)
@@ -80,8 +83,9 @@ class Boss1(Enemy):
                    "hurt" : [[1, 0, 1, 16, 16],[1, 1, 1, 16, 16],[1, 2, 1, 16, 16],[1, 3, 1, 16, 16]]}
 
     ## ONLY FOR READ AND NOT CHANGE THE VALUE SO I NOT PUT IT IN ATTRIBUTE
-    attack_move = {"attack1":{"damage":5, "hitbox":(3,3), "cooldown":3}, "attack2":{"damage":20, "hitbox":(20,20), "cooldown":10},
-                   "dash_attack":{"damage":20, "hitbox":(20,20), "cooldown":35, "charge_time":10}}
+    attack_move = {"attack1":{"damage":5, "hitbox":(3,3), "cooldown":3},
+                   "attack2":{"damage":20, "hitbox":(20,20), "cooldown":10},
+                   "dash_attack":{"damage":20, "hitbox":(20,20), "cooldown":35, "charge_time":10, "speed":7}}
 
     def __init__(self, position, game, name):
         super().__init__()
@@ -95,17 +99,34 @@ class Boss1(Enemy):
         self.cooldown = {"hurt":0, "attack1":0, "attack2":0, "dash_attack":0}
         self.charge = {"charge_dash_attack":0, "bounce":0}
 
-        self.speed = 2
+        self.normal_speed = 30 # 2 * 15
+        self.speed = self.normal_speed
 
 
     def update(self, frame, atk_group, event=None):
         self.frame_update(frame)
-
-        if self.action not in [*self.cooldown.keys(),*self.charge.keys()]:#[*Boss1.attack_move.keys() ,"hurt"]:
+        self.status_update(frame)
+        if self.action not in [*self.cooldown.keys(),*self.charge.keys()]: #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
             self.behaviour(frame)
 
         self.attack(atk_group, frame)
         self.animated()
+
+    def status_update(self, frame):
+        if self.status == "bounce":
+            self.charge[self.status] += frame
+            self.action = "hurt"
+            self.loop_action = True
+            new_velocity = Config.bounce(self.charge[self.status], velocity=self.velocity, facing=self.facing, size=self.size)
+            self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
+            self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
+            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            self.rect.x = valid_x
+            self.rect.y = valid_y
+            if self.charge[self.status] == 2:
+                self.charge[self.status] = 0
+                self.status = None
+                self.speed = self.normal_speed
 
     def frame_update(self, frame):
         for keys,values in self.cooldown.items():
@@ -114,6 +135,7 @@ class Boss1(Enemy):
         self.frame_animation += frame
         self.before_health = self.health
         self.loop_action = False
+        ## ADD STATUS MECHANIC HEAR
 
 
     def behaviour(self, frame):
@@ -121,7 +143,7 @@ class Boss1(Enemy):
         self.velocity = [dx/length, dy/length]
 
         if frame != 1:
-            self.movement(length, dx, dy)
+            self.movement(length)
             return
         # check behaviour for attack 1
         if length >= 350 and self.cooldown["dash_attack"]==0:
@@ -135,9 +157,9 @@ class Boss1(Enemy):
             self.action = "attack1"
             self.cooldown["attack1"] = Boss1.attack_move["attack1"]["cooldown"]
         else :
-            self.movement(length, dx, dy)
+            self.movement(length)
 
-    def movement(self, length, dx, dy):
+    def movement(self, length):
         if length > (self.game.player.size + self.size)/2:
             self.loop_action = True
             if self.action != "walk":
@@ -145,10 +167,10 @@ class Boss1(Enemy):
             self.action = "walk"
 
             self.old_position = (self.rect.x, self.rect.y)
-            self.rect.center = (self.rect.center[0] + ((self.velocity[0]) * self.speed),
-                                self.rect.center[1] + ((self.velocity[1]) * self.speed))
-            check1_x, check1_y, hit_wall = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
-            self.rect.x, self.rect.y = Config.check_entities_overlay(self, (check1_x, check1_y),
+            self.rect.center = (self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
+                                self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))
+            check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            self.rect.x, self.rect.y = Config.entities_overlay(self, (check1_x, check1_y),
                                                                      self.old_position)
 
 
@@ -170,36 +192,30 @@ class Boss1(Enemy):
                 self.charge["charge_dash_attack"] = 0
                 self.action = "dash_attack"
                 self.frame_animation = 0
-                self.atk_pos = (self.game.player.rect.center[0] + (self.game.player.velocity[0] * 50) , #self.charge time * bullet speed * ?-> 5 * 2
-                                self.game.player.rect.center[1] + (self.game.player.velocity[1] * 50))
+                self.atk_pos = (self.game.player.rect.center[0] + (self.game.player.velocity[0] * 20 * Config.dt_per_second * self.game.screen_scale ) , #self.charge time * speed * screen scale * ???-> 5 * 2
+                                self.game.player.rect.center[1] + (self.game.player.velocity[1] * 20 * Config.dt_per_second * self.game.screen_scale))
+                length, dx, dy = Config.get_length(self.rect.center, self.atk_pos)
+                self.velocity = [dx/length, dy/length]
 
         elif self.action == "dash_attack":
-            atk = Attack("bullet", self, Boss1.attack_move["dash_attack"]["damage"],
-                         [2,2], self.atk_pos, direction_type=2, bullet_speed=5, dash_attack=True)
+            self.speed = self.normal_speed * Boss1.attack_move["dash_attack"]["speed"]
+            self.loop_action = True
+            self.rect.center = (self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
+                                self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))
+            check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            self.rect.x = check1_x
+            self.rect.y = check1_y
+
+            self.atk_pos = self.rect.center
+            atk = Attack("melee", self, Boss1.attack_move["dash_attack"]["damage"],
+                         [2,2], self.atk_pos,decay_time=1, direction_type=2)
             atk_group.add(atk)
-            # self.atk_pos = (0,0)
-            ## RELOAD SET SPEED "A" FRAME
-            # self.speed = 7
-            """
-            0. Walk in pre-define block how much each frame will go
-            1. lock the direction where it is going to run
-            2. push character in the way out P.S. what if it is in the corner ?
-            3. find the way to back to do the other action
-            
-            """
-            ## NO BRAIN METHOD ################################################################
-            # before_move = (self.rect.x, self.rect.y)
-            # self.rect.x -= self.speed
-            # self.rect.x, self.rect.y, hit_wall = Config.check_boundary(self, self.game.screen_info,
-            #                                                            self.game.screen_start, before_move)
-            # if hit_wall is True :
-            #     self.action = "idle"
-            # else :
-            ##################################################################################
-            # if self.cooldown["dash_attack"] == 0:
-            #     # RECEIVE INFO THAT RUN GOT START
-            #     self.frame_animation = 0
-            #     self.cooldown["dash_attack"] = Boss1.attack_move["dash_attack"]["cooldown"]
+            if hit_wall is True or self.action == "hurt":
+                self.action = "hurt"
+                self.frame_animation = 0
+                self.status = "bounce"
+                self.velocity[0] *= -1 * self.speed
+                self.velocity[1] *= -1 * self.speed
 
 
 

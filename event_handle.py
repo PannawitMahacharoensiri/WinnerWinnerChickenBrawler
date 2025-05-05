@@ -37,8 +37,9 @@ class EventHandle:
                     self.key_press.remove(event.key)
             if event.type == pygame.MOUSEMOTION:
                 self.mouse_position = event.pos
-            # if event.type == pygame.MOUSEBUTTONUP:
-            #     self.mouse_button.remove(event.button)
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button in self.mouse_button:
+                    self.mouse_button.remove(event.button)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.mouse_button.add(event.button)
 

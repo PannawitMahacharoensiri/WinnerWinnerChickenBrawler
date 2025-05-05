@@ -8,9 +8,9 @@ from config import Config
 
 class Player(pygame.sprite.Sprite):
     # speed relate
-    max_velocity = 4
-    acceleration = 0.2
-    deceleration_ratio = 0.4
+    # max_velocity = 4
+    # acceleration = 0.2
+    # deceleration_ratio = 0.4
     """
     Sprites key index:
     1 is how long the frame
@@ -22,28 +22,30 @@ class Player(pygame.sprite.Sprite):
                    "walk": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
                    "attack1": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
                    "attack2": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
-                   "hurt": [[1, 0, 2, 16, 16], [1, 0, 2, 16, 16], [1, 0, 2, 16, 16], [1, 0, 2, 16, 16]]}
+                   "hurt": [[2, 0, 2, 16, 16], [2, 0, 2, 16, 16], [2, 0, 2, 16, 16], [2, 0, 2, 16, 16]],
+                   "death": [[6, 0, 3, 16, 16], [6, 0, 3, 16, 16], [6, 0, 3, 16, 16], [6, 0, 3, 16, 16]]}
 
     def __init__(self, position, game, name='Player',health=100.0):
         super().__init__()
         # Animation related
         self.game = game
         self.name = name
-        self.health = health
+        self.health = 100
         self.sprite_dir = "sprites\\Walk_substitute2.png"
         self.size = self.game.screen_scale
         self.status = None
         self.image = None
         self.rect = None
 
-        self.max_velocity = 4
-        self.acceleration = 0.2
-        self.deceleration_ratio = 0.4
+        self.max_velocity = 60 #when screen scale = 1 run 60 pixel per second
+        self.acceleration = 3
+        self.deceleration_ratio = 6
 
         self.frame_animation = 0
         self.action = 'idle'
         self.loop_action = False
         self.facing = 0
+        self.death = False
         """ Direction 
             0 : NORTH
             1 : WEST(left)
@@ -77,10 +79,15 @@ class Player(pygame.sprite.Sprite):
         self.action = "hurt"
         self.cooldown["hurt"] = 5
         self.frame_animation = 0
+        # if self.health <= 0:
+        #     self.action = "death"
 
     def update(self, frame, atk_group, event=None):
         self.frame_update(frame)
+        self.player_on_entities()
+
         move_pos = self.player_key_handle(event)
+        self.status_update(frame)
         if self.action not in ["attack1","attack2","hurt"]:
             if move_pos != [0,0] or self.velocity != [0,0]:
                 self.action = "walk"
@@ -96,12 +103,39 @@ class Player(pygame.sprite.Sprite):
         self.frame_animation += frame
         self.loop_action = False
 
+    def status_update(self, frame):
+        if self.status == "bounce":
+            self.charge[self.status] += frame
+            self.action = "hurt"
+            self.loop_action = True
+            new_velocity  = Config.bounce(self.charge[self.status], velocity= self.velocity, facing= self.facing, size= self.size)
+            self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
+            self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
+            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            if new_velocity[0] == 4:
+                print(frame)
+            self.rect.x = valid_x
+            self.rect.y = valid_y
+            if self.charge[self.status] == 2:
+                self.charge[self.status] = 0
+                self.status = None
+
+    def player_on_entities(self):
+        for each_one in self.game.entities_group:
+            if each_one != self:
+                overlay = Config.check_overlay(each_one, self)
+                if overlay is True and self.status != "bounce":
+                    self.velocity = [0,0]
+                    self.status = "bounce"
+
     def player_key_handle(self, event):
         move_pos = [0,0]
 
         # JUMP OUT FIRST
         if event.is_keypress(pygame.K_SPACE):
             self.roll()
+            return [0,0]
+        if self.status == "bounce":
             return [0,0]
 
         if self.action not in ["attack1",'attack2']:
@@ -175,7 +209,7 @@ class Player(pygame.sprite.Sprite):
     def attack(self, atk_group):
         if self.action == 'attack1':
             if self.frame_animation == len(self.animation[self.action][self.facing]) :
-                atk = Attack("bullet", self, 7 ,(10, 10), self.atk_pos, direction_type=2)
+                atk = Attack("melee", self, 200 ,(10, 10), self.atk_pos, direction_type=1)
                 atk_group.add(atk)
                 # self.direction = atk.atk_dir
                 # RESET VALUE
@@ -214,25 +248,24 @@ class Player(pygame.sprite.Sprite):
         if 0 in move_pos :
             if move_pos[0] == 0:
                 if self.velocity[0] > 0:
-                    self.velocity[0] -= self.velocity[0] * self.deceleration_ratio
+                    self.velocity[0] -= self.velocity[0] * self.deceleration_ratio * Config.dt_per_second * self.game.screen_scale
                 else :
-                    self.velocity[0] += self.velocity[0] * self.deceleration_ratio * -1
+                    self.velocity[0] += self.velocity[0] * self.deceleration_ratio * -1 * Config.dt_per_second * self.game.screen_scale
                 if abs(self.velocity[0]) <= 0.01:
                     self.velocity[0] = 0
             if move_pos[1] == 0:
                 if self.velocity[1] > 0:
-                    self.velocity[1] -= self.velocity[1] * self.deceleration_ratio
+                    self.velocity[1] -= self.velocity[1] * self.deceleration_ratio * Config.dt_per_second * self.game.screen_scale
                 else :
-                    self.velocity[1] += self.velocity[1] * self.deceleration_ratio * -1
+                    self.velocity[1] += self.velocity[1] * self.deceleration_ratio * -1 * Config.dt_per_second * self.game.screen_scale
                 if abs(self.velocity[1]) <= 0.01:
                     self.velocity[1] = 0
-
-        self.rect.x += self.velocity[0]
-        self.rect.y += self.velocity[1]
+        self.rect.x += self.velocity[0] * self.game.screen_scale * Config.dt_per_second
+        self.rect.y += self.velocity[1] * self.game.screen_scale * Config.dt_per_second
 
         # Reset value when it exceeds boundaries
-        check1_x, check1_y, hit_wall = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
-        self.rect.x, self.rect.y = Config.check_entities_overlay(self, (check1_x, check1_y),
+        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+        self.rect.x, self.rect.y = Config.entities_overlay(self, (check1_x, check1_y),
                                                                  self.old_position)
 
     def roll(self):
@@ -244,6 +277,11 @@ class Player(pygame.sprite.Sprite):
             self.rect.y += 100
         elif self.facing == 3:
             self.rect.x += 100
+        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+        if hit_wall is True and wall_dir == self.facing:
+            self.status = "bounce"
+            self.velocity[0] *= -1
+            self.velocity[1] *= -1
 
     def animated(self):
         if self.frame_animation > len(self.animation[self.action][self.facing])-1:

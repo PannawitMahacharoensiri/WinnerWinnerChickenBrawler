@@ -7,10 +7,12 @@ class GameState:
     def __init__(self, game):
         self.game = game # game object
         self.current_level = 0
+        self.change_level = False
         # self.game_level = None
         self.button_list = []
+        self.death_list = []
 
-    def draw_screen(self, frame, event):
+    def draw_state(self, frame, event):
         pass
 
     def clean_state(self):
@@ -31,7 +33,7 @@ class Menu(GameState):
                                    0, "2", widget_type="button"))
 
 
-    def draw_screen(self, frame, event):
+    def draw_state(self, frame, event):
             # self.game.window.fill((0,0,0))
         for button in self.button_list:
             button.draw(self.game.window, self.current_level)
@@ -48,20 +50,24 @@ class Menu(GameState):
         #         self.game.window.blit(tell_debug, (50, 100))
 
 
-    def update_screen(self, frame, event):
+    def update_state(self, frame, event):
+        self.key_handle(event)
+
+    def key_handle(self, event):
+        ## Check button push
         for button in self.button_list:
             button.update(event, self.current_level)
             if button.action is True:
-                self.input_handle(button.name)
-
-
-    def input_handle(self, button_name):
-        if button_name == "menu_start_game":
+                if button.name == "menu_start_game":
+                    self.game.current_state = "Gameplay"
+                elif button.name == "menu_2":
+                    print("2")
+        ## check key push that relate with the state
+        if self.game.current_state == "Menu" and self.current_level == 0 and event.is_keypress(pygame.K_e):
             self.game.current_state = "Gameplay"
-        elif button_name == "menu_2":
-            print("2")
-        # if self.game.current_state == "Menu" :
-        #     self.game.current_state = "Gameplay"
+
+    def level_handle(self):
+        pass
 
 
 ########################################################################################################################
@@ -79,9 +85,7 @@ class Gameplay(GameState):
         self.button_list.append(Widget("Gameplay_go_next", self.game, (238, 124), (12, 12),
                                        0, "GO", widget_type="button"))
 
-
-
-    def draw_screen(self,frame, event):
+    def draw_state(self,frame, event):
         # FILL COLOR OUTSIDE BORDER
         self.game.window.fill((0, 0, 0))
         self.game.window.blit(pygame.transform.scale(self.background, self.game.screen_info), self.game.screen_start)
@@ -90,24 +94,49 @@ class Gameplay(GameState):
         for button in self.button_list:
             button.draw(self.game.window, self.current_level)
 
-    def update_screen(self, frame, event):
+    def update_state(self, frame, event):
         self.key_handle(event)
-        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
-        for button in self.button_list:
-            button.update(event, self.current_level)
-            if button.action is True:
-                self.input_handle(button.name)
+
+        dead_list = Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
+        # if len(dead_list) != 0:
+        #     for each in dead_list:
+        #         if each == self.game.player:
+        #             pass
+        #             # print("NOOOOOOOOOO")
+        #         else :
+        #             self.death_list.append(each)
+        #             self.change_level = True
+
         self.enemy_factory.create_boss(self.current_level)
         self.game.entities_group.update(frame, self.game.attack_group, event_object)
         self.game.attack_group.update(frame, self.game.attack_group)
+        self.level_handle()
+
 
     def key_handle(self, event):
+        ## Check button push
+        for button in self.button_list:
+            button.update(event, self.current_level)
+            if button.action is True:
+
+                # button that has this name got push
+                if button.name == "Gameplay_go_next":
+                    self.change_level = True
+        ## check key push that relate with the state
         if self.game.current_state == "Gameplay" and event.is_keypress(pygame.K_e):
             self.game.current_state = "Menu"
 
-    def input_handle(self, button_name):
-        if button_name == "Gameplay_go_next":
+
+    def level_handle(self):
+        if self.change_level is False:
+            return
+
+        if self.current_level == 0:
+            ## COUNT KILL COUNT ??
             self.game.entities_group.remove(self.hostile)
             self.current_level = 1
             self.enemy_factory.already_create = False
-
+            self.change_level = False
+            self.game.attack_group.empty()
+        elif self.change_level == 1:
+            print("bye")
