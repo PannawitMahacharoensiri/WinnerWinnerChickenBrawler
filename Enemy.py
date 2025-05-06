@@ -110,7 +110,7 @@ class Boss1(Enemy):
         self.rect.x = position[0]
         self.rect.y = position[1]
         self.cooldown = {"hurt":0, "attack1":0, "attack2":0, "dash_attack":0}
-        self.charge = {"charge_dash_attack":0, "bounce":0}
+        self.charge = {"charge_dash_attack":0, "bounce":0, "confuse":0}
 
         self.normal_speed = 30 # 2 * 15
         self.speed = self.normal_speed
@@ -121,7 +121,7 @@ class Boss1(Enemy):
         self.status_update(frame)
         self.life_check()
 
-        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"]: #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
+        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"] and self.status != "confuse": #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
             self.behaviour(frame)
 
         self.attack(atk_group, frame)
@@ -145,6 +145,15 @@ class Boss1(Enemy):
                 self.charge[self.status] = 0
                 self.status = None
                 self.speed = self.normal_speed
+                self.status = "confuse"
+
+        elif self.status == "confuse":
+            self.action = "hurt"
+            self.loop_action = True
+            self.charge[self.status] += frame
+            if self.charge[self.status] == 5:
+                self.charge[self.status] = 0
+                self.status = None
 
     def frame_update(self, frame):
         if self.death is False:
@@ -207,8 +216,7 @@ class Boss1(Enemy):
 
         elif self.action == "charge_dash_attack":
             self.loop_action = True
-            if frame == 1:
-                self.charge["charge_dash_attack"] += 1
+            self.charge["charge_dash_attack"] += frame
             if self.charge["charge_dash_attack"] == Boss1.attack_move["dash_attack"]["charge_time"] - 1:
                 self.charge["charge_dash_attack"] = 0
                 self.action = "dash_attack"
@@ -242,29 +250,41 @@ class Boss1(Enemy):
 class Boss2(Enemy):
     sprites_key = {"idle": [[5, 0, 0, 16, 25], [5, 0, 0, 16, 25], [5, 0, 0, 16, 25], [5, 0, 0, 16, 25]],
                    "try_to_run":[[3, 0, 1, 16, 25], [3, 0, 1, 16, 25], [3, 0, 1, 16, 25], [3, 0, 1, 16, 25]],
-                   "attack":[[1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25]]}
-
+                   "attack":[[1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25]],
+                   "hurt":[[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25]],
+                   "death":[[1,4,2,16,25],[1,4,2,16,25],[1,4,2,16,25],[1,4,2,16,25]],
+                   "run":[[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25]],
+                   "spike":[[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25]]
+                   }
+    enemy_move = {"run":{"damage":0, "hitbox":(0,0), "cooldown":100, "charge_time":6},
+                  "attack":{"damage":5, "hitbox":(3,3), "cooldown":3},
+                  "spike":{"damage":20, "hitbox":(32,32), "cooldown":45, "sprite_dir":'sprites\\spike_attack.png',
+                           "sprite_key":{"normal":[[1,0,0,32,32]]}}}
 
     def __init__(self, position, game, name):
         super().__init__()
         self.game = game
         self.name = name
-        self.health = 1
+        self.health = 100
         self.sprite_dir = 'sprites\\Boss2.png'
         self.size = self.game.screen_scale
         self.load_sprite(Boss2.sprites_key)
         self.rect.x = position[0]
         self.rect.y = position[1]
-        self.cooldown = {"hurt":0, "attack":0, "attack2":0, "dash_attack":0}
-        self.charge = {"charge_dash_attack":0, "bounce":0}
+        self.cooldown = {"hurt":0, "attack":0, "attack2":0, "try_to_run":0, "spike":0}
+        self.charge = {"try_to_run":0, "bounce":0, "stuck":0}
 
-        self.normal_speed = 30 # 2 * 15
+        self.normal_speed = 20 # 2 * 15
         self.speed = self.normal_speed
 
     def update(self, frame, atk_group, event=None):
         self.frame_update(frame)
+        self.status_update(frame)
+        self.life_check()
 
-        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"]:
+        ## WHEN CHARACTER NOT MOVE ONE TIME BECAUSE I LET RUN BE THE PART OF COOLDOWN WHEN ACTION == RUN THE MOVEMENT THAT IN BEHAVIOUR ALSO NOT GET RUN
+        ## When character already decide to attack, or in between charge or it in PAIN sprite don't let it think
+        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"] and self.status != "stuck":
             self.behaviour(frame)
 
         self.attack(atk_group, frame)
@@ -279,10 +299,38 @@ class Boss2(Enemy):
             self.before_health = self.health
             self.loop_action = False
 
+
     def behaviour(self, frame):
+
+        ## Length is in pixel GOOD
         length, dx, dy = Config.get_length(self.rect.center, self.game.player.rect.center)
-        if length > 0 and self.cooldown["attack"]==0:
+        self.velocity = [ - dx / length, - dy / length]
+
+        if frame != 1:
+            if self.action == "run":
+                self.movement(length)
+            return
+
+        ## CHANGE TO BE SCALE(1) * self.game.screen_scale
+        if length <= 350 and self.cooldown["try_to_run"] == 0:
+            self.action = "try_to_run"
+
+        elif self.action == "run" and length <= 350 and self.cooldown["spike"] == 0:
+            self.action = "spike"
+
+        elif length > 400 and self.action == "run":
+            ## THIS COULD BE STOP RUNNING
+            # self.action = "set_up"
+            self.action = "idle"
+
+        elif length > 800 :
+            self.action = "idle"
+
+        elif self.action not in ["run","try_to_run"] and self.cooldown["attack"] == 0:
             self.action = "attack"
+
+        elif self.action == "run" :
+            self.movement(length)
 
     def attack(self, atk_group, frame):
         if self.death is True:
@@ -290,13 +338,90 @@ class Boss2(Enemy):
 
         if self.action == "attack":
             self.atk_pos = self.game.player.rect.center
-            atk = Attack("bullet", self, Boss1.attack_move["attack1"]["damage"], Boss1.attack_move["attack1"]["hitbox"], self.atk_pos, direction_type=0)
+            atk = Attack("bullet", self, Boss2.enemy_move["attack"]["damage"],
+                         Boss2.enemy_move["attack"]["hitbox"], self.atk_pos, direction_type=2)
             atk_group.add(atk)
             self.action = "idle"
             self.atk_pos = (0,0)
             self.frame_animation = 0
 
+        elif self.action == "try_to_run":
+            self.loop_action = True
+            self.charge["try_to_run"] += frame
+            if self.charge["try_to_run"] == self.enemy_move["run"]["charge_time"] -1:
+                self.charge["try_to_run"] = 0
+                self.cooldown["try_to_run"] = self.enemy_move["run"]["cooldown"]
+                self.action = "run"
+                self.frame_animation = 0
+
+        elif self.action == "spike" and self.frame_animation == 5:
+            self.atk_pos = self.game.player.rect.center
+            atk = Attack("ground", self, Boss2.enemy_move["spike"]["damage"],
+                         Boss2.enemy_move["spike"]["hitbox"], self.atk_pos, decay_time=100, direction_type=1,
+                         sprite_dir=Boss2.enemy_move["spike"]["sprite_dir"], sprite_key=Boss2.enemy_move["spike"]["sprite_key"])
+            atk_group.add(atk)
+            self.cooldown["spike"] = self.enemy_move["spike"]["cooldown"]
+            self.action = "run"
+            self.frame_animation = 0
 
 
+    def health_reduce(self, bullet_damage):
+        if self.health > 0:
+            ## ADD MORE ANIMATION
+            if self.action == "run":
+                self.status = "stuck"
+
+            self.health -= bullet_damage
+            self.action = "hurt"
+            self.cooldown["hurt"] = 5
+            self.frame_animation = 0
+            if self.cooldown["try_to_run"] > 0:
+                self.cooldown["try_to_run"] -= 4
+
+            #ERROR HANDLE
+            if self.cooldown["try_to_run"] < 0:
+                self.cooldown["try_to_run"] = 0
 
 
+    def status_update(self, frame):
+        if self.death is True:
+            return
+
+        if self.status == "bounce":
+            self.charge[self.status] += frame
+            self.action = "hurt"
+            self.loop_action = True
+            new_velocity = Config.bounce(self.charge[self.status], velocity=self.velocity, facing=self.facing, size=self.size)
+            self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
+            self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
+            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            self.rect.x = valid_x
+            self.rect.y = valid_y
+            if self.charge[self.status] == 2:
+                self.charge[self.status] = 0
+                self.status = None
+                self.speed = self.normal_speed
+        elif self.status == "stuck":
+            self.charge[self.status] += frame
+            self.action = "hurt"
+            self.loop_action = True
+
+            if self.charge[self.status] == 10:
+                self.charge[self.status] = 0
+                self.status = None
+
+
+    def movement(self, length):
+        self.loop_action = True
+        self.action = "run"
+
+        self.old_position = (self.rect.x, self.rect.y)
+        self.rect.center = (
+            self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
+            self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))
+        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info,
+                                                                       self.game.screen_start)
+        self.rect.x, self.rect.y = Config.entities_overlay(self, (check1_x, check1_y),
+                                                           self.old_position)
+        # if hit_wall is True:
+        #     self.action = "idle"

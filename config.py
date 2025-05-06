@@ -92,21 +92,20 @@ class Config:
             hit_wall = True
             wall_direction = 1
             valid_x = 0 + screen_start[0]
-        elif entities.rect.x + entities.size >= screen_info[0] + screen_start[0]:
+        elif entities.rect.x + entities.rect.width >= screen_info[0] + screen_start[0]:
             hit_wall = True
             wall_direction = 2
-            valid_x = screen_info[0] + screen_start[0] - entities.size
+            valid_x = screen_info[0] + screen_start[0] - entities.rect.width
 
         # Check then set new position y
         if entities.rect.y <= 0 + screen_start[1]:
             hit_wall = True
             wall_direction = 0
             valid_y = 0 + screen_start[1]
-        elif entities.rect.y + entities.size >= screen_info[1] + screen_start[1]:
+        elif entities.rect.y + entities.rect.height >= screen_info[1] + screen_start[1]:
             hit_wall = True
             wall_direction = 2
-            valid_y = screen_info[1] + screen_start[1] - entities.size
-
+            valid_y = screen_info[1] + screen_start[1] - entities.rect.height
         return valid_x, valid_y, hit_wall, wall_direction
 
     @staticmethod
