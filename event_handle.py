@@ -12,20 +12,21 @@ class EventHandle:
         event_list = pygame.event.get()
         for event in event_list:
             if event.type == pygame.VIDEORESIZE:
-                game.screen_start_before = game.screen_start
-                game.before_scale = game.screen_scale
-                result_change_ratio = Config.screen_ratio(event.dict['size'], game.screen_scale)
-
-                if result_change_ratio[0] is True:
-                    game.change_size["screen"] = result_change_ratio[0]
-                    game.screen_info = result_change_ratio[1]
-                    game.screen_scale = result_change_ratio[2]
-                valid_window = Config.window_to_screen(event.dict['size'], game.screen_info)
-                game.window = pygame.display.set_mode(valid_window, pygame.RESIZABLE)
-                game.screen_start = ((round(valid_window[0]-game.screen_info[0])/ 2),
-                                     (round(valid_window[1]-game.screen_info[1])/ 2))
-                if game.screen_start != game.screen_start_before :
-                    game.change_size["window"] = True
+                game.change_window_size(event.dict['size'])
+                # game.screen_start_before = game.screen_start
+                # game.before_scale = game.screen_scale
+                # result_change_ratio = Config.screen_ratio(event.dict['size'], game.screen_scale)
+                #
+                # if result_change_ratio[0] is True:
+                #     game.change_size["screen"] = result_change_ratio[0]
+                #     game.screen_info = result_change_ratio[1]
+                #     game.screen_scale = result_change_ratio[2]
+                # valid_window = Config.window_to_screen(event.dict['size'], game.screen_info)
+                # game.window = pygame.display.set_mode(valid_window, pygame.RESIZABLE)
+                # game.screen_start = ((round(valid_window[0]-game.screen_info[0])/ 2),
+                #                      (round(valid_window[1]-game.screen_info[1])/ 2))
+                # if game.screen_start != game.screen_start_before :
+                #     game.change_size["window"] = True
             if event.type == pygame.QUIT:
                 self.quit = True
             if event.type == pygame.KEYDOWN:

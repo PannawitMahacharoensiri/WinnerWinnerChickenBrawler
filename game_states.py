@@ -1,3 +1,5 @@
+import math
+
 import pygame
 from config import Config
 from event_handle import event_object, Widget
@@ -24,9 +26,12 @@ class Menu(GameState):
     def __init__(self, game):
         super().__init__(game)
         # self.game_level = {"Title_screen": 0, "Main_menu": 1, "Pause": 2, "Game_over":3}
-        self.load_asset()
+        self.build_button()
 
-    def load_asset(self):
+    def load_assert(self):
+        pass
+
+    def build_button(self):
         self.button_list.append(Widget("menu_start_game" , self.game, (65,52), (136,22),
                                    0, "Start", widget_type="button"))
         self.button_list.append(Widget("menu_2" , self.game, (65,90), (136,22),
@@ -76,6 +81,114 @@ class Menu(GameState):
         pass
 
 
+class ScreenTransition(GameState):
+
+    def __init__(self, game, box_size=16):
+        super().__init__(game)
+        self.game = game
+        self.finish_load = False
+        self.current_state = self.game.current_state
+        self.box_size = box_size
+        self.next_state = None
+        self.next_level = None
+        self.progress_number = -1
+
+        self.grid = []
+        self.image = None
+        self.width_number = None
+        self.height_number = None
+        self.full_progress = None
+        self.background = None
+        self.load_assert()
+
+        self.current_x = 0
+        self.current_y = 0
+        self.screen_delay = 10
+        self.transition_tracker = None
+        self.transition_type = "fill"
+
+        self.truly_finish = False
+
+    def load_assert(self):
+        self.width_number = math.ceil(self.game.screen_info[0]/ (self.box_size * self.game.screen_scale))
+        self.height_number = math.ceil(self.game.screen_info[1]/ (self.box_size * self.game.screen_scale))
+        self.full_progress =  self.width_number + self.height_number - 1
+        self.background = pygame.transform.scale(pygame.image.load("sprites\\1x1_grid.png"), self.game.screen_info)
+
+        for height in range(self.height_number):
+            start_grid = []
+            for width in range(self.width_number):
+                start_grid.append(0)
+            self.grid.append(start_grid)
+
+        # print(self.grid[8][15])
+
+        scale_x = math.ceil(self.box_size*self.game.screen_scale)
+        scale_y = math.ceil(self.box_size*self.game.screen_scale)
+        scale = max(scale_x, scale_y)
+        self.image = pygame.Surface((scale,scale))
+        self.image.fill((0, 0, 0))
+
+    def process_update(self, frame):
+        if (self.current_x == self.width_number - 1 and self.current_y == self.height_number - 1
+                and self.transition_type == "clean"):
+            self.truly_finish = True
+
+        if self.current_x != self.width_number-1 or self.current_y != self.height_number-1:
+            self.finish_load = False
+        else :
+            self.grid[self.current_y][self.current_x] = 1
+            self.finish_load = True
+            self.current_x = 0
+            self.current_y = 0
+            self.transition_type = "clean"
+
+        if self.finish_load is False and self.transition_type == "fill":
+            self.grid[self.current_y][self.current_x] = 1
+            if self.current_x < self.width_number-1:
+                self.current_x +=1
+            else :
+                self.current_x = 0
+                self.current_y += 1
+
+        elif self.finish_load is False and self.transition_type == "clean":
+            self.game.window.blit(self.background, self.game.screen_start)
+            self.grid[self.current_y][self.current_x] = 0
+            if self.current_x < self.width_number-1:
+                self.current_x +=1
+            else :
+                self.current_x = 0
+                self.current_y += 1
+
+    def update_state(self, frame, event):
+        ## WHEN OUT DON'T FORGET TO SENT IT BACK TO NONE
+        if self.transition_tracker is None:
+            self.transition_tracker = pygame.time.get_ticks()
+
+        if self.game.tracker2 - self.transition_tracker >= self.screen_delay:
+            self.process_update(frame)
+            self.transition_tracker = self.game.tracker2
+
+        if self.truly_finish is True:
+            self.game.window.fill((0, 0, 0))
+            self.game.current_state = self.next_state
+            self.game.game_state[self.game.current_state].current_level = self.next_level
+
+
+
+    def draw_state(self,frame, event):
+        if self.finish_load is False:
+            for x in range(self.width_number):
+                for y in range(self.height_number):
+                    if self.grid[y][x] == 1:
+                        self.game.window.blit(self.image,
+                                              (x * self.box_size * self.game.screen_scale + self.game.screen_start[0],
+                                               y * self.box_size * self.game.screen_scale + self.game.screen_start[1]))
+        else :
+            if self.finish_load is True:
+                self.game.window.blit(self.background, self.game.screen_start)
+                self.game.window.fill((0, 0, 0))
+
 ########################################################################################################################
 
 class Gameplay(GameState):
@@ -86,9 +199,12 @@ class Gameplay(GameState):
         self.kill_require = {0:1,1:1,2:1,3:3}
         self.kill_count = 0
         self.enemy_factory = BossFactory(game)
-        self.load_asset()
+        self.build_button()
 
-    def load_asset(self):
+    def load_assert(self):
+        pass
+
+    def build_button(self):
         self.button_list.append(Widget("Gameplay_go_next", self.game, (238, 124), (12, 12),
                                        0, "GO", widget_type="button"))
 
@@ -164,7 +280,11 @@ class Gameplay(GameState):
             for each in self.game.entities_group:
                 if each != self.game.player:
                     self.game.entities_group.remove(each)
-            self.current_level = 1
+            # self.current_level = 1
+            self.game.current_state = "transition"
+            self.game.game_state["transition"].next_level = 1
+            self.game.game_state["transition"].next_state = "Gameplay"
+
             self.enemy_factory.already_create = False
             self.change_level = False
             self.game.attack_group.empty()

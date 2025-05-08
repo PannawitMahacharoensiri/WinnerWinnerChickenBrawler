@@ -15,27 +15,27 @@ class Config:
 
         if curr_screen_info[0] > 1920 or curr_screen_info[1] > 1080 or curr_screen_info == (1920, 1080) :
             valid_screen_info = (1920, 1080)
-            valid_scale = 7.5
+            valid_scale = 6
         elif curr_screen_info[0] > 1600 or curr_screen_info[1] > 900 or curr_screen_info == (1600, 900):
             valid_screen_info = (1600, 900)
-            valid_scale = 6.25
+            valid_scale = 5
         elif curr_screen_info[0] > 1366 or curr_screen_info[1] > 768 or curr_screen_info == (1366, 768):
             valid_screen_info = (1366, 768)
-            valid_scale = 5.3359375
+            valid_scale = 4.26875
         elif curr_screen_info[0] > 1280 or curr_screen_info[1] > 720 or curr_screen_info == (1280, 720):
             valid_screen_info = (1280, 720)
-            valid_scale = 5
+            valid_scale = 4
         elif curr_screen_info[0] > 1024 or curr_screen_info[1] > 576 or curr_screen_info == (1024, 576):
             valid_screen_info = (1024, 576)
-            valid_scale = 4
-        elif curr_screen_info[0] > 854 or curr_screen_info[1] > 480 or curr_screen_info == (854, 480):
-            valid_screen_info = (854, 480)
-            valid_scale = 3.3359375
-        elif curr_screen_info[0] > 512 or curr_screen_info[1] > 288 or curr_screen_info == (512, 288):
-            valid_screen_info = (512, 288)
+            valid_scale = 3.2
+        elif curr_screen_info[0] > 960 or curr_screen_info[1] > 540 or curr_screen_info == (960, 540):
+            valid_screen_info = (960, 540)
+            valid_scale = 3
+        elif curr_screen_info[0] > 640 or curr_screen_info[1] > 360 or curr_screen_info == (640, 360):
+            valid_screen_info = (640, 360)
             valid_scale = 2
-        elif curr_screen_info[0] > 256 or curr_screen_info[1] > 144 or curr_screen_info == (256, 144):
-            valid_screen_info = (256, 144)
+        elif curr_screen_info[0] > 320 or curr_screen_info[1] > 180 or curr_screen_info == (320, 180):
+            valid_screen_info = (320, 180)
             valid_scale = 1
 
         if valid_scale/current_scale != 1:
@@ -80,7 +80,7 @@ class Config:
         return valid_x, valid_y
 
     @staticmethod
-    def check_boundary(entities, screen_info, screen_start):
+    def check_boundary(entities, arena_area):
         # Save position, if the value not exceed boundaries can just use the start position
         valid_x = entities.rect.x
         valid_y = entities.rect.y
@@ -88,24 +88,24 @@ class Config:
         hit_wall = False
 
         # Check then set new position x
-        if entities.rect.x <= 0 + screen_start[0]:
+        if entities.rect.x <= arena_area["start_x"]:
             hit_wall = True
             wall_direction = 1
-            valid_x = 0 + screen_start[0]
-        elif entities.rect.x + entities.rect.width >= screen_info[0] + screen_start[0]:
+            valid_x = arena_area["start_x"]
+        elif entities.rect.x + entities.rect.width >= arena_area["end_x"]:
             hit_wall = True
-            wall_direction = 2
-            valid_x = screen_info[0] + screen_start[0] - entities.rect.width
+            wall_direction = 3
+            valid_x = arena_area["end_x"] - entities.rect.width
 
         # Check then set new position y
-        if entities.rect.y <= 0 + screen_start[1]:
+        if entities.rect.y <= arena_area["start_y"]:
             hit_wall = True
             wall_direction = 0
-            valid_y = 0 + screen_start[1]
-        elif entities.rect.y + entities.rect.height >= screen_info[1] + screen_start[1]:
+            valid_y = arena_area["start_y"]
+        elif entities.rect.y + entities.rect.height >= arena_area["end_y"]:
             hit_wall = True
             wall_direction = 2
-            valid_y = screen_info[1] + screen_start[1] - entities.rect.height
+            valid_y = arena_area["end_y"] - entities.rect.height
         return valid_x, valid_y, hit_wall, wall_direction
 
     @staticmethod

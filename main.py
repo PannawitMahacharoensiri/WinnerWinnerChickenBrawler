@@ -19,12 +19,17 @@ class Main:
 
         self.debug_mode = True
         self.before_scale = None
-        self.screen_scale = 4
+        self.screen_scale = 1
         self.change_size = {"window":False, "screen":False}
-        self.screen_info = (256*self.screen_scale, 144*self.screen_scale)
+        self.screen_info = (320 * self.screen_scale, 180 * self.screen_scale)#(256*self.screen_scale, 144*self.screen_scale)
         self.window = pygame.display.set_mode(self.screen_info, pygame.RESIZABLE)
         self.screen_start = (0,0)
         self.screen_start_before = self.screen_start
+
+        self.arena_area = {"start_x":self.screen_start[0] + (32 * self.screen_scale),
+                           "end_x": self.screen_start[0] + self.screen_info[0] - (32 * self.screen_scale),
+                           "start_y":self.screen_start[1] + (24 * self.screen_scale),
+                           "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}  # ([start_x,end_x],[start_y, end_y])
 
         pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.game_state = dict()
@@ -37,6 +42,30 @@ class Main:
             frame = 1
             self.tracker1 = self.tracker2
         return frame
+
+    def change_window_size(self, new_size):
+        self.screen_start_before = self.screen_start
+        self.before_scale = self.screen_scale
+        result_change_ratio = Config.screen_ratio(new_size, self.screen_scale)
+
+        if result_change_ratio[0] is True:
+            self.change_size["screen"] = result_change_ratio[0]
+            self.screen_info = result_change_ratio[1]
+            self.screen_scale = result_change_ratio[2]
+        valid_window = Config.window_to_screen(new_size, self.screen_info)
+        self.window = pygame.display.set_mode(valid_window, pygame.RESIZABLE)
+        self.screen_start = ((round(valid_window[0] - self.screen_info[0]) / 2),
+                             (round(valid_window[1] - self.screen_info[1]) / 2))
+        self.arena_area = {"start_x":self.screen_start[0] + (32 * self.screen_scale),
+                           "end_x": self.screen_start[0] + self.screen_info[0] - (32 * self.screen_scale),
+                           "start_y":self.screen_start[1] + (24 * self.screen_scale),
+                           "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}
+
+        if self.screen_start != self.screen_start_before:
+            self.change_size["window"] = True
+
+        if True in self.change_size.values():
+            self.change_sprite_scale()
 
     def change_sprite_scale(self):
         # print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
@@ -60,6 +89,7 @@ class Main:
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
             ## UPDATE TO EVERY STATE NOW
             for each_state in self.game_state.values():
+                each_state.load_assert()
                 if len(each_state.button_list) != 0:
                     for each_button in each_state.button_list:
                         each_button.widget_setting()
@@ -67,7 +97,7 @@ class Main:
         self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
-        background = pygame.transform.scale(pygame.image.load("sprites\\grass.jpg"),self.screen_info)  # depend on game state
+        background = pygame.transform.scale(pygame.image.load("sprites\\scale1-screen.png"),self.screen_info)  # depend on game state
 
         ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
         self.player = Player(self.screen_info, game = self, name="jim")
@@ -76,6 +106,7 @@ class Main:
         # build state (contain all level all button in that state)
         self.game_state["Menu"] = Menu(self)
         self.game_state["Gameplay"] = Gameplay(self, background)
+        self.game_state["transition"] = ScreenTransition(self)
 
         while self.program_running:
             self.clock.tick(Config.game_fps)
@@ -106,10 +137,8 @@ class Main:
             self.game_state[self.current_state].draw_state(frame, event_object)
 
             event_object.update_event(self)
-
-
-            if True in self.change_size.values() :
-                self.change_sprite_scale()
+            # if True in self.change_size.values() :
+            #     self.change_sprite_scale()
             pygame.display.update()
 
         pygame.quit()

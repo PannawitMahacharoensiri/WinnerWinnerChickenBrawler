@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.game = game
         self.name = name
         self.health = 100
-        self.sprite_dir = "sprites\\Walk_substitute2.png"
+        self.sprite_dir = "sprites\\demo_sheet.png"
         self.size = self.game.screen_scale
         self.status = None
         self.image = None

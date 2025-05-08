@@ -269,8 +269,8 @@ class Boss2(Enemy):
         self.sprite_dir = 'sprites\\Boss2.png'
         self.size = self.game.screen_scale
         self.load_sprite(Boss2.sprites_key)
-        self.rect.x = position[0]
-        self.rect.y = position[1]
+        self.rect.x = position[0] * self.game.screen_scale
+        self.rect.y = position[1] * self.game.screen_scale
         self.cooldown = {"hurt":0, "attack":0, "attack2":0, "try_to_run":0, "spike":0}
         self.charge = {"try_to_run":0, "bounce":0, "stuck":0}
 
@@ -416,6 +416,7 @@ class Boss2(Enemy):
         self.action = "run"
 
         self.old_position = (self.rect.x, self.rect.y)
+        print((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale)
         self.rect.center = (
             self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
             self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))

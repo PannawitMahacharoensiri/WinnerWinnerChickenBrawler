@@ -20,6 +20,6 @@ class BossFactory:
         #     self.already_create = True
 
         elif game_level == 1 and len(self.game.entities_group) <= 1:
-            jim = Boss2((self.game.screen_info[0]/2 ,self.game.screen_info[1]/2), game=self.game, name="jim")
+            jim = Boss2(((self.game.screen_info[0]/self.game.screen_scale)/2 ,(self.game.screen_info[1]/self.game.screen_scale)/2), game=self.game, name="jim")
             self.game.entities_group.add(jim)
             self.already_create = True
