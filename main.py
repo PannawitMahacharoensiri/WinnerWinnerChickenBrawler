@@ -22,8 +22,9 @@ class Main:
         self.before_scale = None
         self.screen_scale = 1
         self.change_size = {"window":False, "screen":False}
-        self.screen_info = (320 * self.screen_scale, 180 * self.screen_scale)#(256*self.screen_scale, 144*self.screen_scale)
+        self.screen_info = (320 * self.screen_scale, 180 * self.screen_scale)
         self.window = pygame.display.set_mode(self.screen_info, pygame.RESIZABLE)
+        pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.screen_start = (0,0)
         self.screen_start_before = self.screen_start
 
@@ -32,11 +33,11 @@ class Main:
                            "start_y":self.screen_start[1] + (24 * self.screen_scale),
                            "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}  # ([start_x,end_x],[start_y, end_y])
 
-        pygame.display.set_caption('Winner Winner Chicken Brawler')
-        # self.game_state = dict()
-        self.state_manager = GameStateManage(self)
 
-        self.current_state = "Menu"
+        self.state_manager = GameStateManage(self)
+        self.overlay_manager = OverlayManage()
+
+        # self.current_state = "Menu"
         self.all_frame = 0
 
     def get_frame(self):
@@ -106,12 +107,12 @@ class Main:
         background = pygame.transform.scale(pygame.image.load("sprites\\scale1-screen.png"),self.screen_info)  # depend on game state
         ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
         self.player = Player(self.screen_info, game = self, name="jim")
-        self.entities_group.add(self.player)
+        # self.entities_group.add(self.player)
 
         # build state (contain all level all button in that state)
         self.state_manager.register_state("Menu",Menu(self))
         self.state_manager.register_state("Gameplay", Gameplay(self, background))
-        self.state_manager.register_state("transition", ScreenTransition(self))
+        # self.state_manager.register_state("transition", ScreenTransition(self))
         self.state_manager.set_state("Menu")
 
         # self.game_state["Menu"] = Menu(self)
@@ -133,20 +134,20 @@ class Main:
                 for i in self.entities_group.sprites():
                     show_health.append(i.health)
                 print(show_health)
-            if keys[pygame.K_LSHIFT] and event_object.is_keypress(pygame.K_1):
-                if self.debug_mode is True:
-                    self.debug_mode = False
-                else :
-                    self.debug_mode = True
-            if self.current_state == "Gameplay":
-                if self.debug_mode is True:
-                    Config.open_debug(self.window, self.player, event_object.mouse_position)
+            # if keys[pygame.K_LSHIFT] and event_object.is_keypress(pygame.K_1):
+            #     if self.debug_mode is True:
+            #         self.debug_mode = False
+            #     else :
+            #         self.debug_mode = True
+            # if self.current_state == "Gameplay":
+            #     if self.debug_mode is True:
+            #         Config.open_debug(self.window, self.player, event_object.mouse_position)
 
-            self.state_manager.update(frame, event_object)
+            if self.overlay_manager.freeze_screen is False:
+                self.state_manager.update(frame, event_object)
+            self.overlay_manager.update()
             self.state_manager.draw(self.window, frame, event_object)
-            # self.change_state(event_object)
-            # self.game_state[self.current_state].update_state(frame, event_object)
-            # self.game_state[self.current_state].draw_state(frame, event_object)
+            self.overlay_manager.update()
 
             event_object.update_event(self)
             pygame.display.update()

@@ -28,3 +28,30 @@ class GameStateManage:
             if len(each_state.button_list) != 0:
                 for each_button in each_state.button_list:
                     each_button.widget_setting()
+
+
+class OverlayManage:
+
+    def __init__(self):
+        self.overlays = []
+        self.freeze_screen = False
+
+    def add_overlay(self, overlay):
+        self.overlays.append(overlay)
+
+    def remove_overlay(self, overlay):
+        if overlay in self.overlays:
+            self.overlays.remove(overlay)
+
+    def check_overlay_type(self):
+        for each in self.overlays:
+            if each.freeze is True:
+                self.freeze_screen = True
+            else :
+                self.freeze_screen = False
+
+    def update(self):
+        self.check_overlay_type()
+
+    def draw(self):
+        pass

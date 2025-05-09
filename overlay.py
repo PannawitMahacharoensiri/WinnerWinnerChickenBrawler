@@ -1,6 +1,25 @@
 import pygame
 from config import Config
 
+class Overlay:
+    def __init__(self):
+        self.visible = True
+
+    def update(self, events):
+        pass  # Only used for blocking overlays
+
+    def draw(self, screen):
+        raise NotImplementedError
+
+
+class Dialog(Overlay):
+    def __init__(self):
+        super().__init__()
+
+class Transition(Overlay):
+    def __init__(self):
+        super().__init__()
+
 
 class Widget:
 
