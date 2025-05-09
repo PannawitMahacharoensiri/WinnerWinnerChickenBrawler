@@ -43,13 +43,21 @@ class OverlayManage:
     def check_overlay_type(self):
         if len(self.overlays) != 0:
             for each in self.overlays:
-                if each.freeze is True:
+                if each.blocker is True:
                     self.block_update = True
                 else :
                     self.block_update = False
 
     def update(self):
         self.check_overlay_type()
+        if self.block_update is True:
+            for each_overlay in self.overlays:
+                if each_overlay.blocker is True:
+                    each_overlay.update()
+        else :
+            for each_overlay in self.overlays:
+                each_overlay.update_overlay()
 
     def draw(self):
-        pass
+        for each_overlay in self.overlays:
+            each_overlay.draw_overlay()

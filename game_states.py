@@ -15,6 +15,16 @@ class GameState:
         self.change_level = False
         # self.game_level = None
         self.button_list = []
+        self.overlay_list =[]
+
+    def update_asset(self):
+        self.load_sprite(self.sprites_key)
+        if len(self.button_list) != 0:
+            for each_button in self.button_list:
+                each_button.button_setting()
+        if len(self.overlay_list) != 0:
+            for each_overlay in self.overlay_list:
+                each_overlay.setting()
 
     def draw_state(self, screen, frame, event):
         pass
@@ -56,6 +66,9 @@ class Menu(GameState):
         if len(self.button_list) != 0:
             for each_button in self.button_list:
                 each_button.button_setting()
+        if len(self.overlay_list) != 0:
+            for each_overlay in self.overlay_list:
+                each_overlay.setting()
 
     def build_asset(self):
         self.load_sprite(self.sprites_key)
@@ -255,6 +268,9 @@ class Gameplay(GameState):
         if len(self.button_list) != 0:
             for each_button in self.button_list:
                 each_button.button_setting()
+        if len(self.overlay_list) != 0:
+            for each_overlay in self.overlay_list:
+                each_overlay.setting()
 
     def enter(self, level):
         self.current_level = level
