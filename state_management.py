@@ -24,17 +24,14 @@ class GameStateManage:
 
     def resize(self):
         for each_state in self.states.values():
-            each_state.load_assert()
-            if len(each_state.button_list) != 0:
-                for each_button in each_state.button_list:
-                    each_button.widget_setting()
+            each_state.update_asset()
 
 
 class OverlayManage:
 
     def __init__(self):
         self.overlays = []
-        self.freeze_screen = False
+        self.block_update = False
 
     def add_overlay(self, overlay):
         self.overlays.append(overlay)
@@ -44,11 +41,12 @@ class OverlayManage:
             self.overlays.remove(overlay)
 
     def check_overlay_type(self):
-        for each in self.overlays:
-            if each.freeze is True:
-                self.freeze_screen = True
-            else :
-                self.freeze_screen = False
+        if len(self.overlays) != 0:
+            for each in self.overlays:
+                if each.freeze is True:
+                    self.block_update = True
+                else :
+                    self.block_update = False
 
     def update(self):
         self.check_overlay_type()

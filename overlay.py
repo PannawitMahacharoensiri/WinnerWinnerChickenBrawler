@@ -3,7 +3,7 @@ from config import Config
 
 class Overlay:
     def __init__(self):
-        self.visible = True
+        self.freeze = False
 
     def update(self, events):
         pass  # Only used for blocking overlays
@@ -15,23 +15,26 @@ class Overlay:
 class Dialog(Overlay):
     def __init__(self):
         super().__init__()
+        self.freeze = True
 
 class Transition(Overlay):
-    def __init__(self):
+    def __init__(self, command):
         super().__init__()
+        self.freeze = True
+        self.state = "fade_in"
+        self.finish = {"fade_in":False, "fade_out":False}
+        self.command = command
 
 
-class Widget:
+class Button:
 
-    def __init__(self, name, game, border_position, border_ratio, level, text
-                 , widget_type = "text", font_name = None,
-                 text_color= (0,0,0), color = (255,255,255) ,hover_color = (100,100,100)):
+    def __init__(self, name, game, border_position, border_ratio, level, text, command,
+                 font_name = None, text_color= (0,0,0), color = (255,255,255) ,hover_color = (100,100,100)):
         self.name = name
         self.game = game
         self.initial_position = border_position
         self.initial_ratio = border_ratio #(width, height)
         self.level = level
-        self.type = widget_type
         self.border = None
         self.rect = None
 
@@ -41,19 +44,23 @@ class Widget:
         self.color = color
         self.hover_color = hover_color
         self.text = text
+        self.command = command
+
         self.text_surface = None
         self.text_rect = None
-        self.widget_setting()
-
+        self.button_setting()
         self.hovered = False
-        self.action = False
 
-    def widget_setting(self):
-        self.border = pygame.Surface((self.initial_ratio[0] * self.game.screen_scale, self.initial_ratio[1] * self.game.screen_scale))  ##DRAW BORDER
+
+    def button_setting(self):
+        self.border = pygame.Surface((self.initial_ratio[0] * self.game.screen_scale,
+                                      self.initial_ratio[1] * self.game.screen_scale))  ##DRAW BORDER
         self.border.fill(self.color)
         self.rect = self.border.get_rect()
-        self.rect.x = (self.initial_position[0]*self.game.screen_scale) + self.game.screen_start[0]
-        self.rect.y = (self.initial_position[1]*self.game.screen_scale) + self.game.screen_start[1]
+        self.rect.x = ((self.initial_position[0]-(self.initial_ratio[0]/2))
+                       *self.game.screen_scale) + self.game.screen_start[0]
+        self.rect.y = ((self.initial_position[1]-(self.initial_ratio[1]/2))
+                       *self.game.screen_scale) + self.game.screen_start[1]
         self.font = pygame.font.SysFont(self.font_name, int(self.initial_ratio[1] * self.game.screen_scale ))
         self.text_surface = self.font.render(self.text, True, self.text_color)
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
@@ -66,22 +73,17 @@ class Widget:
             self.hovered = True
 
     def update(self, event, game_level):
-        self.action = False
-        if game_level != self.level:
-            return
-
-        if self.type == "button":
+        # self.action = False
+        if game_level == self.level:
             self.check_hover(event)
-        if self.hovered is True and event.mouse_click(1):
-            self.action = True
+            if self.hovered is True and event.mouse_click(1):
+                self.command()
 
     def draw(self, screen, game_level):
-        if game_level != self.level:
-            return
-        if self.hovered is True:
-            self.border.fill(self.hover_color)
-        else :
-            self.border.fill(self.color)
-        screen.blit(self.border, ((self.initial_position[0]*self.game.screen_scale) + self.game.screen_start[0],
-                                 (self.initial_position[1]*self.game.screen_scale) + self.game.screen_start[1]))
-        screen.blit(self.text_surface, self.text_rect)
+        if game_level == self.level:
+            if self.hovered is True:
+                self.border.fill(self.hover_color)
+            else :
+                self.border.fill(self.color)
+            screen.blit(self.border, (self.rect.x,self.rect.y))
+            screen.blit(self.text_surface, self.text_rect)

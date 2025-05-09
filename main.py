@@ -74,19 +74,29 @@ class Main:
     def change_sprite_scale(self):
         # print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
         if self.change_size["window"] is True:
+            if self.player is not None:
+                self.player.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
+                self.player.rect.y += (self.screen_start[1] - self.screen_start_before[1])/self.screen_scale
             for each in self.entities_group:
-                each.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
-                each.rect.y += (self.screen_start[1] - self.screen_start_before[1])/self.screen_scale
+                if each != self.player:
+                    each.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
+                    each.rect.y += (self.screen_start[1] - self.screen_start_before[1])/self.screen_scale
             for each_attack in self.attack_group:
                 each_attack.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
                 each_attack.rect.y += (self.screen_start[1] - self.screen_start_before[1])/self.screen_scale
         if self.change_size["screen"] is True:
+            if self.player is not None:
+                player_location = (self.player.rect.x, self.player.rect.y)
+                self.player.load_sprite(self.player.sprites_key)
+                self.player.rect.x = (player_location[0] / self.before_scale) * self.screen_scale
+                self.player.rect.y = (player_location[1] / self.before_scale) * self.screen_scale
             for each in self.entities_group:
                 # print(f"before {each.rect.x/self.before_scale}")
-                location = (each.rect.x, each.rect.y)
-                each.load_sprite(each.sprites_key)
-                each.rect.x = (location[0]/self.before_scale) * self.screen_scale
-                each.rect.y = (location[1]/self.before_scale) * self.screen_scale
+                if each != self.player:
+                    location = (each.rect.x, each.rect.y)
+                    each.load_sprite(each.sprites_key)
+                    each.rect.x = (location[0]/self.before_scale) * self.screen_scale
+                    each.rect.y = (location[1]/self.before_scale) * self.screen_scale
                 # print(each.rect.x/self.screen_scale)
             for each_attack in self.attack_group:
                 attack_location = (each_attack.rect.x, each_attack.rect.y)
@@ -94,24 +104,17 @@ class Main:
                 each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
             ## UPDATE TO EVERY STATE NOW
-            self.state_manager.resize()
-        # for each_state in self.game_state.values():
-        #     each_state.load_assert()
-        #     if len(each_state.button_list) != 0:
-        #         for each_button in each_state.button_list:
-        #             each_button.widget_setting()
-        # reset the value
+        self.state_manager.resize()
         self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
-        background = pygame.transform.scale(pygame.image.load("sprites\\scale1-screen.png"),self.screen_info)  # depend on game state
         ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
         self.player = Player(self.screen_info, game = self, name="jim")
         # self.entities_group.add(self.player)
 
         # build state (contain all level all button in that state)
         self.state_manager.register_state("Menu",Menu(self))
-        self.state_manager.register_state("Gameplay", Gameplay(self, background))
+        self.state_manager.register_state("Gameplay", Gameplay(self))
         # self.state_manager.register_state("transition", ScreenTransition(self))
         self.state_manager.set_state("Menu")
 
@@ -143,7 +146,7 @@ class Main:
             #     if self.debug_mode is True:
             #         Config.open_debug(self.window, self.player, event_object.mouse_position)
 
-            if self.overlay_manager.freeze_screen is False:
+            if self.overlay_manager.block_update is False:
                 self.state_manager.update(frame, event_object)
             self.overlay_manager.update()
             self.state_manager.draw(self.window, frame, event_object)
