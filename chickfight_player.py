@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.game = game
         self.name = name
         self.health = 100
-        self.sprite_dir = "sprites\\demo_sheet.png"
+        self.sprite_dir = "sprites\\Walk_substitute2.png"
         self.size = self.game.screen_scale
         self.status = None
         self.image = None
@@ -116,7 +116,7 @@ class Player(pygame.sprite.Sprite):
             new_velocity  = Config.bounce(self.charge[self.status], velocity= self.velocity, facing= self.facing, size= self.size)
             self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
             self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
-            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             if new_velocity[0] == 4:
                 print(frame)
             self.rect.x = valid_x
@@ -144,7 +144,7 @@ class Player(pygame.sprite.Sprite):
         move_pos = [0,0]
 
         # JUMP OUT FIRST
-        if self.status == "bounce" or self.death is  True:
+        if self.action == "hurt" or self.death is  True:
             return [0,0]
         if event.is_keypress(pygame.K_SPACE):
             self.roll()
@@ -276,7 +276,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.velocity[1] * self.game.screen_scale * Config.dt_per_second
 
         # Reset value when it exceeds boundaries
-        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
         self.rect.x, self.rect.y = Config.entities_overlay(self, (check1_x, check1_y),
                                                                  self.old_position)
 
@@ -289,7 +289,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.y += 100
         elif self.facing == 3:
             self.rect.x += 100
-        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
         if hit_wall is True and wall_dir == self.facing:
             self.status = "bounce"
             self.velocity[0] *= -1

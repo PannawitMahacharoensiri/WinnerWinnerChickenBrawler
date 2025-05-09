@@ -1,6 +1,7 @@
 from chickfight_player import Player
 from event_handle import event_object
-from Sprite_handle import *
+# from Sprite_handle import *
+from state_management import *
 from config import *
 import pygame
 import math
@@ -32,7 +33,9 @@ class Main:
                            "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}  # ([start_x,end_x],[start_y, end_y])
 
         pygame.display.set_caption('Winner Winner Chicken Brawler')
-        self.game_state = dict()
+        # self.game_state = dict()
+        self.state_manager = GameStateManage(self)
+
         self.current_state = "Menu"
         self.all_frame = 0
 
@@ -71,42 +74,49 @@ class Main:
         # print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
         if self.change_size["window"] is True:
             for each in self.entities_group:
-                each.rect.x += self.screen_start[0] - self.screen_start_before[0]
-                each.rect.y += self.screen_start[1] - self.screen_start_before[1]
+                each.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
+                each.rect.y += (self.screen_start[1] - self.screen_start_before[1])/self.screen_scale
             for each_attack in self.attack_group:
-                each_attack.rect.x += self.screen_start[0] - self.screen_start_before[0]
-                each_attack.rect.y += self.screen_start[1] - self.screen_start_before[1]
+                each_attack.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
+                each_attack.rect.y += (self.screen_start[1] - self.screen_start_before[1])/self.screen_scale
         if self.change_size["screen"] is True:
             for each in self.entities_group:
+                # print(f"before {each.rect.x/self.before_scale}")
                 location = (each.rect.x, each.rect.y)
                 each.load_sprite(each.sprites_key)
                 each.rect.x = (location[0]/self.before_scale) * self.screen_scale
                 each.rect.y = (location[1]/self.before_scale) * self.screen_scale
+                # print(each.rect.x/self.screen_scale)
             for each_attack in self.attack_group:
                 attack_location = (each_attack.rect.x, each_attack.rect.y)
                 each_attack.change_scale(self.screen_scale)
                 each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
             ## UPDATE TO EVERY STATE NOW
-            for each_state in self.game_state.values():
-                each_state.load_assert()
-                if len(each_state.button_list) != 0:
-                    for each_button in each_state.button_list:
-                        each_button.widget_setting()
+            self.state_manager.resize()
+        # for each_state in self.game_state.values():
+        #     each_state.load_assert()
+        #     if len(each_state.button_list) != 0:
+        #         for each_button in each_state.button_list:
+        #             each_button.widget_setting()
         # reset the value
         self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
         background = pygame.transform.scale(pygame.image.load("sprites\\scale1-screen.png"),self.screen_info)  # depend on game state
-
         ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
         self.player = Player(self.screen_info, game = self, name="jim")
         self.entities_group.add(self.player)
 
         # build state (contain all level all button in that state)
-        self.game_state["Menu"] = Menu(self)
-        self.game_state["Gameplay"] = Gameplay(self, background)
-        self.game_state["transition"] = ScreenTransition(self)
+        self.state_manager.register_state("Menu",Menu(self))
+        self.state_manager.register_state("Gameplay", Gameplay(self, background))
+        self.state_manager.register_state("transition", ScreenTransition(self))
+        self.state_manager.set_state("Menu")
+
+        # self.game_state["Menu"] = Menu(self)
+        # self.game_state["Gameplay"] = Gameplay(self, background)
+        # self.game_state["transition"] = ScreenTransition(self)
 
         while self.program_running:
             self.clock.tick(Config.game_fps)
@@ -132,13 +142,13 @@ class Main:
                 if self.debug_mode is True:
                     Config.open_debug(self.window, self.player, event_object.mouse_position)
 
+            self.state_manager.update(frame, event_object)
+            self.state_manager.draw(self.window, frame, event_object)
             # self.change_state(event_object)
-            self.game_state[self.current_state].update_state(frame, event_object)
-            self.game_state[self.current_state].draw_state(frame, event_object)
+            # self.game_state[self.current_state].update_state(frame, event_object)
+            # self.game_state[self.current_state].draw_state(frame, event_object)
 
             event_object.update_event(self)
-            # if True in self.change_size.values() :
-            #     self.change_sprite_scale()
             pygame.display.update()
 
         pygame.quit()

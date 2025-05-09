@@ -2,9 +2,11 @@ import math
 
 import pygame
 from config import Config
-from event_handle import event_object, Widget
+from event_handle import event_object
+from overlay import *
 from Enemy_factory import BossFactory
 
+# @abstractproperty
 class GameState:
     def __init__(self, game):
         self.game = game # game object
@@ -12,12 +14,20 @@ class GameState:
         self.change_level = False
         # self.game_level = None
         self.button_list = []
-        self.death_list = []
 
-    def draw_state(self, frame, event):
+    def draw_state(self, screen, frame, event):
         pass
 
     def clean_state(self):
+        pass
+
+    def exit(self):
+        pass
+
+    def enter(self, level):
+        pass
+
+    def level_switch(self, new_level):
         pass
 
 ########################################################################################################################
@@ -40,10 +50,10 @@ class Menu(GameState):
                                        level=3, text="GO to Menu", widget_type="button"))
 
 
-    def draw_state(self, frame, event):
+    def draw_state(self, screen, frame, event):
             # self.game.window.fill((0,0,0))
         for button in self.button_list:
-            button.draw(self.game.window, self.current_level)
+            button.draw(screen, self.current_level)
         # elif self.current_level == 2:
         #     self.game.window.fill((0, 0, 100))
         #     font = pygame.font.SysFont(None, 72)
@@ -59,6 +69,7 @@ class Menu(GameState):
 
     def update_state(self, frame, event):
         self.key_handle(event)
+        print(event.mouse_button)
         # print(self.game.game_state["Gameplay"].current_level)
 
     def key_handle(self, event):
@@ -66,13 +77,14 @@ class Menu(GameState):
         for button in self.button_list:
             button.update(event, self.current_level)
             if button.action is True:
-                if button.name == "menu_start_game":
-                    self.game.current_state = "Gameplay"
-                elif button.name == "menu_2":
-                    print("2")
-                elif button.name == "menu_game_over":
-                    print("run")
-                    self.current_level = 0
+                self.game.state_manager.set_state("Gameplay")
+                # if button.name == "menu_start_game":
+                #     self.game.current_state = "Gameplay"
+                # elif button.name == "menu_2":
+                #     print("2")
+                # elif button.name == "menu_game_over":
+                #     print("run")
+                #     self.current_level = 0
         ## check key push that relate with the state
         if self.game.current_state == "Menu" and self.current_level == 0 and event.is_keypress(pygame.K_e):
             self.game.current_state = "Gameplay"
@@ -176,18 +188,18 @@ class ScreenTransition(GameState):
 
 
 
-    def draw_state(self,frame, event):
+    def draw_state(self, screen, frame, event):
         if self.finish_load is False:
             for x in range(self.width_number):
                 for y in range(self.height_number):
                     if self.grid[y][x] == 1:
-                        self.game.window.blit(self.image,
+                        screen.blit(self.image,
                                               (x * self.box_size * self.game.screen_scale + self.game.screen_start[0],
                                                y * self.box_size * self.game.screen_scale + self.game.screen_start[1]))
         else :
             if self.finish_load is True:
-                self.game.window.blit(self.background, self.game.screen_start)
-                self.game.window.fill((0, 0, 0))
+                screen.blit(self.background, self.game.screen_start)
+                screen.fill((0, 0, 0))
 
 ########################################################################################################################
 
@@ -196,6 +208,7 @@ class Gameplay(GameState):
         super().__init__(game)
         self.background = bg
         # self.game_level = {"dummy":0, "Boss1":1, "Boss2":2, "Boss3":3}
+        self.death_list = []
         self.kill_require = {0:1,1:1,2:1,3:3}
         self.kill_count = 0
         self.enemy_factory = BossFactory(game)
@@ -204,18 +217,28 @@ class Gameplay(GameState):
     def load_assert(self):
         pass
 
+    def enter(self, level):
+        self.current_level = level
+        self.game.entities_group.add(self.game.player)
+
+    def exit(self):
+        self.game.entities_group.empty()
+        self.game.attack_group.empty()
+        self.death_list = []
+
+
     def build_button(self):
         self.button_list.append(Widget("Gameplay_go_next", self.game, (238, 124), (12, 12),
                                        0, "GO", widget_type="button"))
 
-    def draw_state(self,frame, event):
+    def draw_state(self, screen, frame, event):
         # FILL COLOR OUTSIDE BORDER
-        self.game.window.fill((0, 0, 0))
-        self.game.window.blit(pygame.transform.scale(self.background, self.game.screen_info), self.game.screen_start)
+        screen.fill((0, 0, 0))
+        screen.blit(pygame.transform.scale(self.background, self.game.screen_info), self.game.screen_start)
         self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
         for button in self.button_list:
-            button.draw(self.game.window, self.current_level)
+            button.draw(screen, self.current_level)
 
     def update_state(self, frame, event):
         self.key_handle(event)
@@ -251,10 +274,12 @@ class Gameplay(GameState):
             if each.death is True and each not in self.death_list:
                 # print(each.name)
                 if each == self.game.player:
-                    self.game.current_state = "Menu"
-                    self.game.game_state["Menu"].current_level = 3
+                    self.game.state_manager.set_stage("Menu")
+
+                    # self.game.current_state = "Menu"
+                    # self.game.game_state["Menu"].current_level = 3
                     ## it only change current level of gameplay object not menu
-                    self.current_level = 0
+                    # self.current_level = 0
 
                 else :
                     ## KEY TO CHANGE LEVEL

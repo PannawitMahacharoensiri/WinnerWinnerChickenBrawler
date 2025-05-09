@@ -66,8 +66,7 @@ class Attack(pygame.sprite.Sprite):
 
             self.rect.center = (self.rect.center[0] + move_speed_x,
                                 self.rect.center[1] + move_speed_y)
-            self.rect.x, self.rect.y , hit_wall, wall_dir = Config.check_boundary(self, self.maker.game.screen_info,
-                                                                        self.maker.game.screen_start)
+            self.rect.x, self.rect.y , hit_wall, wall_dir = Config.check_boundary(self, self.maker.game.arena_area)
             if hit_wall is True:
                 self.bullet_speed = 0
         elif self.attack_type == "ground":

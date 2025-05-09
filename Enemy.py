@@ -121,7 +121,8 @@ class Boss1(Enemy):
         self.status_update(frame)
         self.life_check()
 
-        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"] and self.status != "confuse": #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
+        if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"] and self.status != "confuse":
+            #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
             self.behaviour(frame)
 
         self.attack(atk_group, frame)
@@ -138,7 +139,7 @@ class Boss1(Enemy):
             new_velocity = Config.bounce(self.charge[self.status], velocity=self.velocity, facing=self.facing, size=self.size)
             self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
             self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
-            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             self.rect.x = valid_x
             self.rect.y = valid_y
             if self.charge[self.status] == 2:
@@ -196,7 +197,7 @@ class Boss1(Enemy):
             self.old_position = (self.rect.x, self.rect.y)
             self.rect.center = (self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
                                 self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))
-            check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             self.rect.x, self.rect.y = Config.entities_overlay(self, (check1_x, check1_y),
                                                                      self.old_position)
 
@@ -231,7 +232,7 @@ class Boss1(Enemy):
             self.loop_action = True
             self.rect.center = (self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
                                 self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))
-            check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             self.rect.x = check1_x
             self.rect.y = check1_y
 
@@ -394,7 +395,7 @@ class Boss2(Enemy):
             new_velocity = Config.bounce(self.charge[self.status], velocity=self.velocity, facing=self.facing, size=self.size)
             self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
             self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
-            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info, self.game.screen_start)
+            valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             self.rect.x = valid_x
             self.rect.y = valid_y
             if self.charge[self.status] == 2:
@@ -420,8 +421,7 @@ class Boss2(Enemy):
         self.rect.center = (
             self.rect.center[0] + ((self.velocity[0]) * self.speed * Config.dt_per_second * self.game.screen_scale),
             self.rect.center[1] + ((self.velocity[1]) * self.speed * Config.dt_per_second * self.game.screen_scale))
-        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.screen_info,
-                                                                       self.game.screen_start)
+        check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
         self.rect.x, self.rect.y = Config.entities_overlay(self, (check1_x, check1_y),
                                                            self.old_position)
         # if hit_wall is True:
