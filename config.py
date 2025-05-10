@@ -85,21 +85,21 @@ class Config:
         hit_wall = False
 
         # Check then set new position x
-        if entities.rect.x <= arena_area["start_x"]:
+        if entities.rect.x < arena_area["start_x"]:
             hit_wall = True
             wall_direction = 1
             valid_x = arena_area["start_x"]
-        elif entities.rect.x + entities.rect.width >= arena_area["end_x"]:
+        elif entities.rect.x + entities.rect.width > arena_area["end_x"]:
             hit_wall = True
             wall_direction = 3
             valid_x = arena_area["end_x"] - entities.rect.width
 
         # Check then set new position y
-        if entities.rect.y <= arena_area["start_y"]:
+        if entities.rect.y < arena_area["start_y"]:
             hit_wall = True
             wall_direction = 0
             valid_y = arena_area["start_y"]
-        elif entities.rect.y + entities.rect.height >= arena_area["end_y"]:
+        elif entities.rect.y + entities.rect.height > arena_area["end_y"]:
             hit_wall = True
             wall_direction = 2
             valid_y = arena_area["end_y"] - entities.rect.height

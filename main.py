@@ -22,7 +22,7 @@ class Main:
 
         self.debug_mode = True
         self.before_scale = None
-        self.screen_scale = 1
+        self.screen_scale = 3
         self.change_size = {"window":False, "screen":False}
         self.screen_info = (320 * self.screen_scale, 180 * self.screen_scale)
         self.window = pygame.display.set_mode(self.screen_info, pygame.RESIZABLE)

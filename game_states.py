@@ -192,7 +192,7 @@ class Gameplay(GameState):
         screen.blit(self.image, self.game.screen_start)
 
     def draw_state(self, screen, event):
-        self.animated( screen)
+        self.animated(screen)
         self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
         for button in self.button_list:
@@ -208,8 +208,8 @@ class Gameplay(GameState):
             button.update(event, self.current_level)
 
         self.enemy_factory.create_boss(self.current_level)
-        self.game.entities_group.update(frame, self.game.attack_group, event_object)
-        self.game.attack_group.update(frame, self.game.attack_group)
+        self.game.entities_group.update(frame, ms_per_loop, self.game.attack_group, event_object)
+        self.game.attack_group.update(frame, ms_per_loop, self.game.attack_group)
         Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
 
         self.check_kill(frame)

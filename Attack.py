@@ -53,7 +53,7 @@ class Attack(pygame.sprite.Sprite):
             self.rect = self.image.get_rect()
             self.size = self.maker.game.screen_scale * self.rect.width
 
-    def update(self, frame, atk_group):
+    def update(self, frame, ms_per_loop, atk_group):
         self.frame_counter += frame
         self.decay_time -= frame
 
