@@ -10,7 +10,7 @@ direction_type = 0: 4-direction , 1: 8-direction, 2: all-direction
 class Attack(pygame.sprite.Sprite):
 
     def __init__(self, attack_type, maker, damage, hit_box, attack_pos, decay_time = 2,
-                 direction_type = 0, bullet_speed = 30, sprite_dir = None ,sprite_key = None):
+                 direction_type = 0, bullet_speed = 1, sprite_dir = None ,sprite_key = None):
         super().__init__()
         self.attack_type = attack_type
         self.maker = maker
@@ -61,8 +61,8 @@ class Attack(pygame.sprite.Sprite):
         if self.attack_type == 'bullet':
             ## BUG WITH SCREEN SCALE
             self.old_position = (self.rect.x, self.rect.y)
-            move_speed_x = (self.bullet_direction[0]*self.bullet_speed * Config.dt_per_second * self.maker.game.screen_scale)
-            move_speed_y = (self.bullet_direction[1]*self.bullet_speed * Config.dt_per_second * self.maker.game.screen_scale)
+            move_speed_x = (self.bullet_direction[0]*self.bullet_speed * self.maker.game.screen_scale)
+            move_speed_y = (self.bullet_direction[1]*self.bullet_speed * self.maker.game.screen_scale)
 
             self.rect.center = (self.rect.center[0] + move_speed_x,
                                 self.rect.center[1] + move_speed_y)

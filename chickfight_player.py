@@ -23,7 +23,8 @@ class Player(pygame.sprite.Sprite):
                    "attack1": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
                    "attack2": [[4, 0, 1, 16, 16], [4, 4, 1, 16, 16], [4, 8, 1, 16, 16], [4, 12, 1, 16, 16]],
                    "hurt": [[2, 0, 2, 16, 16], [2, 0, 2, 16, 16], [2, 0, 2, 16, 16], [2, 0, 2, 16, 16]],
-                   "death": [[6, 0, 3, 16, 16], [6, 0, 3, 16, 16], [6, 0, 3, 16, 16], [6, 0, 3, 16, 16]]}
+                   "death": [[6, 0, 3, 16, 16], [6, 0, 3, 16, 16], [6, 0, 3, 16, 16], [6, 0, 3, 16, 16]],
+                   "enter_arena":[[2, 0, 2, 16, 16], [2, 0, 2, 16, 16], [2, 0, 2, 16, 16], [2, 0, 2, 16, 16]]}
 
     def __init__(self, position, game, name='Player',health=100.0):
         super().__init__()
@@ -37,9 +38,9 @@ class Player(pygame.sprite.Sprite):
         self.image = None
         self.rect = None
 
-        self.max_velocity = 60 #when screen scale = 1 run 60 pixel per second
-        self.acceleration = 3
-        self.deceleration_ratio = 6
+        self.max_velocity = 0.75 #when screen scale = 1 run 60 pixel per second
+        self.acceleration = 0.2
+        self.deceleration_ratio = 0.4
 
         self.frame_animation = 0
         self.action = 'idle'
@@ -60,12 +61,12 @@ class Player(pygame.sprite.Sprite):
         # self.rect.height = 50
         self.old_position = (0,0)
         self.atk_pos = (0, 0)
-        self.rect.center = (self.size/2, position[1] // 2)
+        self.rect.center = (0, position[1]*self.game.screen_scale)
         # self.rect.y = position[1]//2
 
         self.velocity = [0,0]
         self.cooldown = {"hurt": 0}
-        self.charge = {"bounce":0}
+        self.charge = {"bounce":0, "enter_arena":0}
 
     def load_sprite(self, sprites_key):
         player_sprite_sheet = SpriteHandler(pygame.image.load(self.sprite_dir))
@@ -89,7 +90,7 @@ class Player(pygame.sprite.Sprite):
         self.life_check()
         move_pos = self.player_key_handle(event)
         self.status_update(frame)
-        if self.action not in ["attack1","attack2","hurt", "death"]:
+        if self.action not in ["attack1","attack2","hurt", "death", "enter_arena"]:
             if move_pos != [0,0] or self.velocity != [0,0]:
                 self.action = "walk"
                 self.loop_action = True
@@ -114,8 +115,8 @@ class Player(pygame.sprite.Sprite):
             self.action = "hurt"
             self.loop_action = True
             new_velocity  = Config.bounce(self.charge[self.status], velocity= self.velocity, facing= self.facing, size= self.size)
-            self.rect.x += new_velocity[0] * Config.dt_per_second * self.game.screen_scale
-            self.rect.y += new_velocity[1] * Config.dt_per_second * self.game.screen_scale
+            self.rect.x += new_velocity[0] * self.game.screen_scale
+            self.rect.y += new_velocity[1] * self.game.screen_scale
             valid_x, valid_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             if new_velocity[0] == 4:
                 print(frame)
@@ -124,6 +125,19 @@ class Player(pygame.sprite.Sprite):
             if self.charge[self.status] == 2:
                 self.charge[self.status] = 0
                 self.status = None
+
+        elif self.status == "enter_arena":
+            self.charge[self.status] += frame
+            self.action = "enter_arena"
+            self.loop_action = True
+            self.velocity[0] += 0.1 * self.game.screen_scale
+            # elif self.charge[self.status] == 2:
+                # self.velocity[0] -= 0. * self.game.screen_scale
+            self.rect.x += self.velocity[0]
+            self.rect.y += self.velocity[1]
+            if  self.game.arena_area["start_x"] < self.rect.x < self.game.arena_area["end_x"]:
+                self.status = None
+
 
     def life_check(self):
         if self.health <= 0:
@@ -144,7 +158,7 @@ class Player(pygame.sprite.Sprite):
         move_pos = [0,0]
 
         # JUMP OUT FIRST
-        if self.action == "hurt" or self.death is  True:
+        if self.action in ["hurt","enter_arena"] or self.death is  True:
             return [0,0]
         if event.is_keypress(pygame.K_SPACE):
             self.roll()
@@ -260,20 +274,20 @@ class Player(pygame.sprite.Sprite):
         if 0 in move_pos :
             if move_pos[0] == 0:
                 if self.velocity[0] > 0:
-                    self.velocity[0] -= self.velocity[0] * self.deceleration_ratio * Config.dt_per_second * self.game.screen_scale
+                    self.velocity[0] -= self.velocity[0] * self.deceleration_ratio * self.game.screen_scale
                 else :
-                    self.velocity[0] += self.velocity[0] * self.deceleration_ratio * -1 * Config.dt_per_second * self.game.screen_scale
+                    self.velocity[0] += self.velocity[0] * self.deceleration_ratio * -1 * self.game.screen_scale
                 if abs(self.velocity[0]) <= 0.01:
                     self.velocity[0] = 0
             if move_pos[1] == 0:
                 if self.velocity[1] > 0:
-                    self.velocity[1] -= self.velocity[1] * self.deceleration_ratio * Config.dt_per_second * self.game.screen_scale
+                    self.velocity[1] -= self.velocity[1] * self.deceleration_ratio * self.game.screen_scale
                 else :
-                    self.velocity[1] += self.velocity[1] * self.deceleration_ratio * -1 * Config.dt_per_second * self.game.screen_scale
+                    self.velocity[1] += self.velocity[1] * self.deceleration_ratio * -1 * self.game.screen_scale
                 if abs(self.velocity[1]) <= 0.01:
                     self.velocity[1] = 0
-        self.rect.x += self.velocity[0] * self.game.screen_scale * Config.dt_per_second
-        self.rect.y += self.velocity[1] * self.game.screen_scale * Config.dt_per_second
+        self.rect.x += self.velocity[0] * self.game.screen_scale
+        self.rect.y += self.velocity[1] * self.game.screen_scale
 
         # Reset value when it exceeds boundaries
         check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)

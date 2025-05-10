@@ -6,14 +6,14 @@ from config import Config
 class Overlay:
     def __init__(self, update_frequency):
         self.blocker = False
-        self.loop_number = 0
+        self.timer_ms = 0
         self.update_frequency = update_frequency
 
-    def update_overlay(self, events):
+    def update_overlay(self, ms_per_loop):
         pass  # Only used for blocking overlays
 
     def draw_overlay(self, screen):
-        raise NotImplementedError
+        pass
 
     def setting(self):
         pass
@@ -25,17 +25,19 @@ class Dialog(Overlay):
         self.blocker = True
 
 class Transition(Overlay):
-    def __init__(self, game, command, initial_box_size, color=(0,0,0)):
+    def __init__(self, game, update_frequency, initial_box_size=32, command=None, color=(0,0,0)):
         super().__init__(update_frequency)
         self.game = game
         self.blocker = True
         self.initial_box_size = initial_box_size
+        self.ms_per_1update = 20
         self.box_size = None
         self.valid_level = []
 
         self.box_number = {"width":0, "height":0}
-        self.grid = []
-        self.current_grid = [0,0]
+        self.grid = None
+        self.current_x = 0
+        self.current_y = 0
 
         self.image = None
         self.color = color
@@ -50,6 +52,7 @@ class Transition(Overlay):
         self.box_size = self.initial_box_size * self.game.screen_scale
         self.box_number["width"] = math.ceil(self.game.screen_info[0]/ self.box_size)
         self.box_number["height"] = math.ceil(self.game.screen_info[1]/ self.box_size)
+        self.grid = []
         for height in range(self.box_number["height"]):
             start_grid = []
             for width in range(self.box_number["width"]):
@@ -60,19 +63,80 @@ class Transition(Overlay):
         self.image.fill(self.color)
 
     def transition_update(self):
+        if self.finish[self.state] is True:
+            if self.state == "fade_in":
+                if self.command is not None:
+                    self.command()
+                self.state = "fade_out"
+                self.current_y = 0
+                self.current_x = 0
+            elif self.state == "fade_out":
+                self.game.overlay_manager.remove_overlay(self)
+
         if self.state == "fade_in" and self.finish[self.state] is False:
-            
+            self.grid[self.current_y][self.current_x] = 1
+            if self.current_x < self.box_number["width"]-1:
+                self.current_x += 1
+            else :
+                self.current_x = 0
+                self.current_y += 1
+            if self.current_x == 0 and self.current_y == self.box_number["height"]:
+                self.finish["fade_in"] = True
+        elif self.state == "fade_out" and self.finish[self.state] is False:
+            self.grid[self.current_y][self.current_x] = 0
+            if self.current_x < self.box_number["width"]-1:
+                self.current_x += 1
+            else :
+                self.current_x = 0
+                self.current_y += 1
+            if self.current_x == 0 and self.current_y == self.box_number["height"]:
+                self.finish["fade_out"] = True
 
-
-    def update_overlay(self, events):
-        self.loop_number += 1
-        if self.loop_number == self.update_frequency and False in self.finish.values():
+    def update_overlay(self, ms_per_loop):
+        self.timer_ms += ms_per_loop
+        if self.timer_ms >= self.ms_per_1update:
+            self.timer_ms -= self.ms_per_1update
             self.transition_update()
 
         # Only used for blocking overlays
 
     def draw_overlay(self, screen):
-        raise NotImplementedError
+        for box_x in range(self.box_number["width"]):
+            for box_y in range(self.box_number["height"]):
+                if self.grid[box_y][box_x] == 1:
+                    screen.blit(self.image,(box_x * self.box_size + self.game.screen_start[0], box_y * self.box_size + self.game.screen_start[1]))
+
+class TransitionHalf(Transition):
+    def __init__(self, game, update_frequency, initial_box_size=32, command=None, color=(0,0,0)):
+        super().__init__(game, update_frequency, initial_box_size, command, color)
+
+    def transition_update(self):
+        if self.finish[self.state] is True:
+            if self.state == "fade_in":
+                if self.command is not None:
+                    self.command()
+                self.state = "fade_out"
+                self.current_y = 0
+                self.current_x = 0
+            elif self.state == "fade_out":
+                self.game.overlay_manager.remove_overlay(self)
+
+        if self.state == "fade_in" and self.finish[self.state] is False:
+            for each in range(self.box_number["height"]):
+                self.grid[each][self.current_x] = 1
+            if self.current_x < self.box_number["width"]-1:
+                self.current_x += 1
+            else :
+                self.finish["fade_in"] = True
+        elif self.state == "fade_out" and self.finish[self.state] is False:
+            for each in range(self.box_number["height"]):
+                self.grid[each][self.current_x] = 0
+            if self.current_x < self.box_number["width"]-1:
+                self.current_x += 1
+            else :
+                self.finish["fade_out"] = True
+
+
 
 
 class Button:

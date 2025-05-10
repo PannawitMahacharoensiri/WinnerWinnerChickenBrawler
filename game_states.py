@@ -15,18 +15,22 @@ class GameState:
         self.change_level = False
         # self.game_level = None
         self.button_list = []
-        self.overlay_list =[]
+        self.overlay_dict =dict()
+        self.timer_ms = 0
 
-    def update_asset(self):
+    def asset_update(self):
         self.load_sprite(self.sprites_key)
         if len(self.button_list) != 0:
             for each_button in self.button_list:
                 each_button.button_setting()
-        if len(self.overlay_list) != 0:
-            for each_overlay in self.overlay_list:
+        if len(self.overlay_dict) != 0:
+            for each_overlay in self.overlay_dict.values():
                 each_overlay.setting()
 
-    def draw_state(self, screen, frame, event):
+    def update_state(self, frame, ms_per_loop, event):
+        pass
+
+    def draw_state(self, screen, event):
         pass
 
     def clean_state(self):
@@ -61,13 +65,13 @@ class Menu(GameState):
         self.bg_animation = Menu_sprite.pack_sprite(sprites_key, self.game.screen_scale)
         self.image = self.bg_animation[self.game_level[self.current_level]][0][self.frame_animation]
 
-    def update_asset(self):
+    def asset_update(self):
         self.load_sprite(self.sprites_key)
         if len(self.button_list) != 0:
             for each_button in self.button_list:
                 each_button.button_setting()
-        if len(self.overlay_list) != 0:
-            for each_overlay in self.overlay_list:
+        if len(self.overlay_dict) != 0:
+            for each_overlay in self.overlay_dict.values():
                 each_overlay.setting()
 
     def build_asset(self):
@@ -83,7 +87,7 @@ class Menu(GameState):
         #                                level=3, text="GO to Menu", widget_type="button"))
 
 
-    def draw_state(self, screen, frame, event):
+    def draw_state(self, screen, event):
             # self.game.window.fill((0,0,0))
         for button in self.button_list:
             button.draw(screen, self.current_level)
@@ -100,7 +104,7 @@ class Menu(GameState):
         #         self.game.window.blit(tell_debug, (50, 100))
 
 
-    def update_state(self, frame, event):
+    def update_state(self, frame, ms_per_loop, event):
         for button in self.button_list:
             button.update(event, self.current_level)
         # print(self.game.game_state["Gameplay"].current_level)
@@ -123,116 +127,6 @@ class Menu(GameState):
     #         self.game.state_manager.set_state("Gameplay")
 
 
-# class ScreenTransition(GameState):
-#
-#     def __init__(self, game, box_size=16):
-#         super().__init__(game)
-#         self.game = game
-#         self.finish_load = False
-#         # self.current_state = self.game.current_state
-#         self.box_size = box_size
-#         self.next_state = None
-#         self.next_level = None
-#         self.progress_number = -1
-#
-#         self.grid = []
-#         self.image = None
-#         self.width_number = None
-#         self.height_number = None
-#         self.full_progress = None
-#         self.background = None
-#         self.load_assert()
-#
-#         self.current_x = 0
-#         self.current_y = 0
-#         self.screen_delay = 10
-#         self.transition_tracker = None
-#         self.transition_type = "fill"
-#
-#         self.truly_finish = False
-#
-#     def load_assert(self):
-#         self.width_number = math.ceil(self.game.screen_info[0]/ (self.box_size * self.game.screen_scale))
-#         self.height_number = math.ceil(self.game.screen_info[1]/ (self.box_size * self.game.screen_scale))
-#         self.full_progress =  self.width_number + self.height_number - 1
-#         self.background = pygame.transform.scale(pygame.image.load("sprites\\1x1_grid.png"), self.game.screen_info)
-#
-#         for height in range(self.height_number):
-#             start_grid = []
-#             for width in range(self.width_number):
-#                 start_grid.append(0)
-#             self.grid.append(start_grid)
-#
-#         # print(self.grid[8][15])
-#
-#         scale_x = math.ceil(self.box_size*self.game.screen_scale)
-#         scale_y = math.ceil(self.box_size*self.game.screen_scale)
-#         scale = max(scale_x, scale_y)
-#         self.image = pygame.Surface((scale,scale))
-#         self.image.fill((0, 0, 0))
-#
-#     def process_update(self, frame):
-#         if (self.current_x == self.width_number - 1 and self.current_y == self.height_number - 1
-#                 and self.transition_type == "clean"):
-#             self.truly_finish = True
-#
-#         if self.current_x != self.width_number-1 or self.current_y != self.height_number-1:
-#             self.finish_load = False
-#         else :
-#             self.grid[self.current_y][self.current_x] = 1
-#             self.finish_load = True
-#             self.current_x = 0
-#             self.current_y = 0
-#             self.transition_type = "clean"
-#
-#         if self.finish_load is False and self.transition_type == "fill":
-#             self.grid[self.current_y][self.current_x] = 1
-#             if self.current_x < self.width_number-1:
-#                 self.current_x +=1
-#             else :
-#                 self.current_x = 0
-#                 self.current_y += 1
-#
-#         elif self.finish_load is False and self.transition_type == "clean":
-#             self.game.window.blit(self.background, self.game.screen_start)
-#             self.grid[self.current_y][self.current_x] = 0
-#             if self.current_x < self.width_number-1:
-#                 self.current_x +=1
-#             else :
-#                 self.current_x = 0
-#                 self.current_y += 1
-#
-#     def update_state(self, frame, event):
-#         ## WHEN OUT DON'T FORGET TO SENT IT BACK TO NONE
-#         if self.transition_tracker is None:
-#             self.transition_tracker = pygame.time.get_ticks()
-#
-#         if self.game.tracker2 - self.transition_tracker >= self.screen_delay:
-#             self.process_update(frame)
-#             self.transition_tracker = self.game.tracker2
-#
-#         if self.truly_finish is True:
-#             self.game.window.fill((0, 0, 0))
-#             self.game.current_state = self.next_state
-#             self.game.game_state[self.game.current_state].current_level = self.next_level
-#
-#
-#
-#     def draw_state(self, screen, frame, event):
-#         if self.finish_load is False:
-#             for x in range(self.width_number):
-#                 for y in range(self.height_number):
-#                     if self.grid[y][x] == 1:
-#                         screen.blit(self.image,
-#                                               (x * self.box_size * self.game.screen_scale + self.game.screen_start[0],
-#                                                y * self.box_size * self.game.screen_scale + self.game.screen_start[1]))
-#         else :
-#             if self.finish_load is True:
-#                 screen.blit(self.background, self.game.screen_start)
-#                 screen.fill((0, 0, 0))
-
-########################################################################################################################
-
 class Gameplay(GameState):
     sprites_key = {"dummy":[[3, 0, 0, 320, 180]], "Boss1":[[3, 0, 0, 320, 180]], "Boss2":[[3, 0, 0, 320, 180]],
                    "Boss3":[[3, 0, 0, 320, 180]]}
@@ -251,6 +145,7 @@ class Gameplay(GameState):
         self.kill_require = {"dummy":1,"Boss1":1,"Boss2":1,"Boss3":3}
         self.kill_count = 0
         self.enemy_factory = BossFactory(game)
+        self.ms_per_frame = 500
         self.build_asset()
 
     def load_sprite(self, sprites_key):
@@ -261,20 +156,28 @@ class Gameplay(GameState):
     def build_asset(self):
         self.load_sprite(self.sprites_key)
         self.button_list.append(Button("next_level", self.game, (280, 150), (15, 15),
-                                       0, "GO", command= lambda: self.level_switch(1)))
+                                       0, "GO", command= lambda: self.game.overlay_manager.add_overlay(self.overlay_dict["transition"])))
+        self.overlay_dict["transition"] = TransitionHalf(self.game, 2,16, command=lambda :self.level_switch(1))
 
-    def update_asset(self):
+    def asset_update(self):
         self.load_sprite(self.sprites_key)
         if len(self.button_list) != 0:
             for each_button in self.button_list:
                 each_button.button_setting()
-        if len(self.overlay_list) != 0:
-            for each_overlay in self.overlay_list:
+        if len(self.overlay_dict) != 0:
+            for each_overlay in self.overlay_dict.values():
                 each_overlay.setting()
 
     def enter(self, level):
         self.current_level = level
         self.game.entities_group.add(self.game.player)
+        for each_entity in self.game.entities_group:
+            each_entity.status = "enter_arena"
+
+    # def entry_new_level(self):
+    #     for each_entity in self.game.entities_group:
+    #         ##X,Y
+    #         each_entity.status = "enter_arena"
 
     def exit(self):
         self.game.entities_group.empty()
@@ -288,15 +191,18 @@ class Gameplay(GameState):
         self.image = self.bg_animation[self.game_level[self.current_level]][0][self.frame_animation]
         screen.blit(self.image, self.game.screen_start)
 
-    def draw_state(self, screen, frame, event):
+    def draw_state(self, screen, event):
         self.animated( screen)
         self.game.entities_group.draw(self.game.window)
         self.game.attack_group.draw(self.game.window)
         for button in self.button_list:
             button.draw(screen, self.current_level)
 
-    def update_state(self, frame, event):
-        self.frame_animation += frame
+    def update_state(self, frame, ms_per_loop, event):
+        self.timer_ms += ms_per_loop
+        if self.timer_ms >= self.ms_per_frame:
+            self.timer_ms -= self.ms_per_frame
+            self.frame_animation += 1
 
         for button in self.button_list:
             button.update(event, self.current_level)
@@ -308,20 +214,6 @@ class Gameplay(GameState):
 
         self.check_kill(frame)
         # self.level_switch()
-
-
-    # def key_handle(self, event):
-    #     ## Check button push
-    #     for button in self.button_list:
-    #         button.update(event, self.current_level)
-    #         if button.action is True:
-    #
-    #             # button that has this name got push
-    #             if button.name == "Gameplay_go_next":
-    #                 self.change_level = True
-    #     ## check key push that relate with the state
-    #     if event.is_keypress(pygame.K_e):
-    #         self.game.state_manager.set_state("Menu")
 
     def check_kill(self, frame):
         if frame != 1:
@@ -360,7 +252,7 @@ class Gameplay(GameState):
         if next_level == 1:
             if self.current_level == 0:
                 ## COUNT KILL COUNT ??
-                # self.game.entities_group.remove(self.hostile)
+                # self.game.entities_group.remove(self.game.player)
                 for each in self.game.entities_group:
                     if each != self.game.player:
                         self.game.entities_group.remove(each)

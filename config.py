@@ -2,10 +2,7 @@ import math
 import pygame
 
 class Config:
-    game_fps = 60
-    frame_delay = 250
     color = {'black': (0, 0, 0), 'white': (255, 255, 255), 'green':(0, 255, 0)}
-    dt_per_second = (1000/game_fps)/1000
 
     @staticmethod
     def screen_ratio(curr_screen_info, current_scale):
@@ -130,8 +127,8 @@ class Config:
         new_velocity = [0,0]
         if velocity != [0,0]:
             if frame == 0:
-                new_velocity[0] = velocity[0]/2
-                new_velocity[1] = velocity[1]/2
+                new_velocity[0] = velocity[0]/3
+                new_velocity[1] = velocity[1]/3
             elif frame == 1:
                 new_velocity[0] = velocity[0]/3
                 new_velocity[1] = velocity[1]/3

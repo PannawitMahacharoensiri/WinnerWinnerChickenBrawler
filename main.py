@@ -10,9 +10,11 @@ from game_states import *
 class Main:
     def __init__(self):
         pygame.init()
-        self.tracker1 = pygame.time.get_ticks()
-        self.tracker2 = None
         self.clock = pygame.time.Clock()
+        self.game_fps = 60
+        self.tracker1 = 0
+        self.ms_per_1frame = 250
+
         self.program_running = True
         self.player = None
         self.entities_group = EntitiesGroup()
@@ -33,18 +35,18 @@ class Main:
                            "start_y":self.screen_start[1] + (24 * self.screen_scale),
                            "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}  # ([start_x,end_x],[start_y, end_y])
 
-
         self.state_manager = GameStateManage(self)
         self.overlay_manager = OverlayManage()
 
         # self.current_state = "Menu"
         self.all_frame = 0
 
-    def get_frame(self):
+    def get_global_frame(self, ms_per_loop):
         frame = 0
-        if self.tracker2 - self.tracker1 >= Config.frame_delay:
+        self.tracker1 += ms_per_loop
+        if self.tracker1 >= self.ms_per_1frame:
             frame = 1
-            self.tracker1 = self.tracker2
+            self.tracker1 -= self.ms_per_1frame
         return frame
 
     def change_window_size(self, new_size):
@@ -109,7 +111,7 @@ class Main:
 
     def main_loop(self):
         ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
-        self.player = Player(self.screen_info, game = self, name="jim")
+        self.player = Player([0,50], game = self, name="jim")
         # self.entities_group.add(self.player)
 
         # build state (contain all level all button in that state)
@@ -123,9 +125,9 @@ class Main:
         # self.game_state["transition"] = ScreenTransition(self)
 
         while self.program_running:
-            self.clock.tick(Config.game_fps)
-            self.tracker2 = pygame.time.get_ticks()
-            frame = self.get_frame()
+            ms_per_loop = self.clock.tick(self.game_fps)
+
+            frame = self.get_global_frame(ms_per_loop)
             self.all_frame += frame
 
             ##KEYPRESS OF MAINLOOP
@@ -147,10 +149,10 @@ class Main:
             #         Config.open_debug(self.window, self.player, event_object.mouse_position)
 
             if self.overlay_manager.block_update is False:
-                self.state_manager.update(frame, event_object)
-            self.overlay_manager.update()
-            self.state_manager.draw(self.window, frame, event_object)
-            self.overlay_manager.update()
+                self.state_manager.update(frame, ms_per_loop, event_object)
+            self.overlay_manager.update(ms_per_loop)
+            self.state_manager.draw(self.window, event_object)
+            self.overlay_manager.draw(self.window)
 
             event_object.update_event(self)
             pygame.display.update()
