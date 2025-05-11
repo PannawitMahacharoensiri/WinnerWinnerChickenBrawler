@@ -1,0 +1,6 @@
+install 
+- pygame
+- python
+- math
+- matplotlib
+- pandas
