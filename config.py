@@ -118,32 +118,6 @@ class Config:
         return 0
 
     @staticmethod
-    def bounce(frame, velocity, facing, size):
-        if abs(velocity[0]) <= size/5:
-            velocity[0] = 0
-        if abs(velocity[1]) <= size/5:
-            velocity[1] = 0
-
-        new_velocity = [0,0]
-        if velocity != [0,0]:
-            if frame == 0:
-                new_velocity[0] = velocity[0]/3
-                new_velocity[1] = velocity[1]/3
-            elif frame == 1:
-                new_velocity[0] = velocity[0]/3
-                new_velocity[1] = velocity[1]/3
-        else :
-            if facing == 0:
-                new_velocity[1] = size/2
-            elif facing == 2:
-                new_velocity[1] = - size/ 2
-            elif facing == 1:
-                new_velocity[0] = size/ 2
-            elif facing == 3 :
-                new_velocity[0] = - size/ 2
-        return new_velocity
-
-    @staticmethod
     def open_debug(screen, A, B):
 
         # MOUSE

@@ -10,7 +10,7 @@ direction_type = 0: 4-direction , 1: 8-direction, 2: all-direction
 class Attack(pygame.sprite.Sprite):
 
     def __init__(self, attack_type, maker, damage, hit_box, attack_pos, decay_time = 2,
-                 direction_type = 0, bullet_speed = 1, sprite_dir = None ,sprite_key = None):
+                 direction_type = 0, bullet_speed = 50, sprite_dir = None ,sprite_key = None):
         super().__init__()
         self.attack_type = attack_type
         self.maker = maker
@@ -64,8 +64,8 @@ class Attack(pygame.sprite.Sprite):
             move_speed_x = (self.bullet_direction[0]*self.bullet_speed * self.maker.game.screen_scale)
             move_speed_y = (self.bullet_direction[1]*self.bullet_speed * self.maker.game.screen_scale)
 
-            self.rect.center = (self.rect.center[0] + move_speed_x,
-                                self.rect.center[1] + move_speed_y)
+            self.rect.center = (self.rect.center[0] + move_speed_x * (ms_per_loop/1000),
+                                self.rect.center[1] + move_speed_y * (ms_per_loop/1000))
             self.rect.x, self.rect.y , hit_wall, wall_dir = Config.check_boundary(self, self.maker.game.arena_area)
             if hit_wall is True:
                 self.bullet_speed = 0

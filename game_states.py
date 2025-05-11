@@ -39,7 +39,7 @@ class GameState:
     def exit(self):
         pass
 
-    def enter(self, level):
+    def enter(self, to_level):
         pass
 
     def level_switch(self, new_level=0):
@@ -49,21 +49,33 @@ class GameState:
 
 class Menu(GameState):
     sprites_key = {"Title_screen":[[1, 4, 0, 320, 180]], "Main_menu":[[1, 4, 0, 320, 180]],
-                   "Pause":[[1, 4, 0, 320, 180]], "Game_over":[[1, 4, 0, 320, 180]]}
+                   "Game_over":[[1, 4, 0, 320, 180]], "Statistic":[[1, 4, 0, 320, 180]]}
 
     def __init__(self, game):
         super().__init__(game)
-        self.game_level = {0:"Title_screen", 1:"Main_menu", 2:"Pause", 3:"Game_over"}
+        self.game_level = {0:"Title_screen", 1:"Main_menu", 2:"Game_over", 3:"Statistic"}
         self.sprite_dir = "sprites\\scale1-screen - animated.png"
         self.bg_animation = dict()
         self.image = None
         self.frame_animation = 0
         self.build_asset()
+        self.ms_per_frame = 500
+
 
     def load_sprite(self, sprites_key):
         Menu_sprite = SpriteHandler(pygame.image.load(self.sprite_dir))
         self.bg_animation = Menu_sprite.pack_sprite(sprites_key, self.game.screen_scale)
+        self.frame_animation = 0
         self.image = self.bg_animation[self.game_level[self.current_level]][0][self.frame_animation]
+
+    def exit(self):
+        self.current_level = 0
+
+    def enter(self, to_level):
+        if to_level is not None:
+            self.level_switch(to_level)
+
+
 
     def asset_update(self):
         self.load_sprite(self.sprites_key)
@@ -77,18 +89,21 @@ class Menu(GameState):
     def build_asset(self):
         self.load_sprite(self.sprites_key)
         self.button_list.append(Button("start_game", self.game, (160,60), (136,22),
-                                       0, "start",
-                                       command= lambda:self.game.state_manager.set_state("Gameplay")))
-        # self.button_list.append(Widget("menu_start_game" , self.game, (65,52), (136,22),
-        #                            0, "Start", widget_type="button"))
-        # self.button_list.append(Widget("menu_2" , self.game, (65,90), (136,22),
-        #                            0, "2", widget_type="button"))
-        # self.button_list.append(Widget("menu_game_over", self.game, (65,90), (150,20),
-        #                                level=3, text="GO to Menu", widget_type="button"))
+                                       1, "start",
+                                       command= lambda:self.game.state_manager.set_state("Gameplay", 0)))
+        self.button_list.append(Button("statistic", self.game, (160,90), (136,22),
+                                       1, "statistic",
+                                       command= lambda:self.level_switch(3)))
+        self.overlay_dict["back_to_title"] = Transition(self.game, 10,20, command=lambda :self.level_switch(0))
 
 
     def draw_state(self, screen, event):
-            # self.game.window.fill((0,0,0))
+        if self.current_level == 2:
+            overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 100))
+            overlay.set_alpha(10)
+            screen.blit(overlay, (self.game.screen_start[0], self.game.screen_start[1]))
+
         for button in self.button_list:
             button.draw(screen, self.current_level)
         # elif self.current_level == 2:
@@ -103,33 +118,33 @@ class Menu(GameState):
         #         tell_debug = font_small.render("Debug mode", False, (255, 255, 255))
         #         self.game.window.blit(tell_debug, (50, 100))
 
+    def key_handle(self, event):
+        if self.current_level == 0:
+            if len(event.key_press) != 0 or len(event.mouse_button) != 0:
+                event.reset_event("mouse_pos")
+                self.level_switch(1)
 
     def update_state(self, frame, ms_per_loop, event):
-        for button in self.button_list:
-            button.update(event, self.current_level)
-        # print(self.game.game_state["Gameplay"].current_level)
+        self.timer_ms += ms_per_loop
+        if self.timer_ms >= self.ms_per_frame:
+            self.timer_ms -= self.ms_per_frame
+            self.frame_animation += 1
 
-    # def key_handle(self, event):
-    #     ## Check button push
-    #     for button in self.button_list:
-    #         button.update(event, self.current_level)
-    #         if button.action is True:
-    #             self.game.state_manager.set_state("Gameplay")
-    #             # if button.name == "menu_start_game":
-    #             #     self.game.current_state = "Gameplay"
-    #             # elif button.name == "menu_2":
-    #             #     print("2")
-    #             # elif button.name == "menu_game_over":
-    #             #     print("run")
-    #             #     self.current_level = 0
-    #     ## check key push that relate with the state
-    #     if self.current_level == 0 and event.is_keypress(pygame.K_e):
-    #         self.game.state_manager.set_state("Gameplay")
+        if self.frame_animation > 1:
+            self.key_handle(event)
+            for button in self.button_list:
+                button.update(event, self.current_level)
 
+
+    def level_switch(self, new_level=0):
+        self.frame_animation = 0
+        self.current_level = new_level
+        if new_level == 0 :
+            pass
 
 class Gameplay(GameState):
     sprites_key = {"dummy":[[3, 0, 0, 320, 180]], "Boss1":[[3, 0, 0, 320, 180]], "Boss2":[[3, 0, 0, 320, 180]],
-                   "Boss3":[[3, 0, 0, 320, 180]]}
+                   "Boss3":[[3, 0, 0, 320, 180]], "pause_menu":[[3, 0, 0, 320, 180]]}
 
 
     def __init__(self, game):
@@ -140,13 +155,15 @@ class Gameplay(GameState):
         self.image = None
         self.frame_animation = 0
 
-        self.game_level = {0:"dummy", 1:"Boss1", 2:"Boss2", 3:"Boss3"}
+        self.former_level = 0
+        self.game_level = {0:"dummy", 1:"Boss1", 2:"Boss2", 3:"Boss3", 4:"pause_menu"}
         self.death_list = []
         self.kill_require = {"dummy":1,"Boss1":1,"Boss2":1,"Boss3":3}
         self.kill_count = 0
-        self.enemy_factory = BossFactory(game)
+        self.enemy_factory = BossFactory(game, self)
         self.ms_per_frame = 500
         self.build_asset()
+        self.pause = False
 
     def load_sprite(self, sprites_key):
         Map_sprite = SpriteHandler(pygame.image.load(self.sprite_dir))
@@ -157,7 +174,44 @@ class Gameplay(GameState):
         self.load_sprite(self.sprites_key)
         self.button_list.append(Button("next_level", self.game, (280, 150), (15, 15),
                                        0, "GO", command= lambda: self.game.overlay_manager.add_overlay(self.overlay_dict["transition"])))
-        self.overlay_dict["transition"] = TransitionHalf(self.game, 2,16, command=lambda :self.level_switch(1))
+        self.overlay_dict["player_health"] = HealthBarOverlay(self.game, self.game.player)
+        self.overlay_dict["timer"] = TimerOverlay(self.game, (150,20), (45,15))
+        self.overlay_dict["transition"] = TransitionHalf(self.game, 32,16, command=lambda :self.level_switch(1))
+        self.button_list.append(Button("exit", self.game, (150,60), (100,20), 4,
+                                       "exit", command=lambda:self.game.overlay_manager.add_overlay(self.overlay_dict["back_to_title"])))
+        self.button_list.append(Button("continue", self.game, (150,90), (100,20), 4,
+                                       "continue", command=lambda:self.level_switch(self.former_level)))
+        self.overlay_dict["back_to_title"] = Transition(self.game, 10, 20, command=lambda: self.game.state_manager.set_state("Menu",0))
+
+    def draw_state(self, screen, event):
+        self.animated(screen)
+        self.game.entities_group.draw(self.game.window)
+        self.game.attack_group.draw(self.game.window)
+        for button in self.button_list:
+            button.draw(screen, self.current_level)
+        if self.pause is True:
+            overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+            overlay.fill((128, 128, 128, 150))
+            screen.blit(overlay, (self.game.screen_start[0], self.game.screen_start[1]))
+
+    def update_state(self, frame, ms_per_loop, event):
+
+        self.key_handle(event)
+        for button in self.button_list:
+            button.update(event, self.current_level)
+        if self.pause is True:
+            return
+
+        self.timer_ms += ms_per_loop
+        if self.timer_ms >= self.ms_per_frame:
+            self.timer_ms -= self.ms_per_frame
+            self.frame_animation += 1
+
+        self.enemy_factory.create_boss(self.current_level)
+        self.game.entities_group.update(frame, ms_per_loop, self.game.attack_group, event_object)
+        self.game.attack_group.update(frame, ms_per_loop, self.game.attack_group)
+        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
+        self.check_kill(frame)
 
     def asset_update(self):
         self.load_sprite(self.sprites_key)
@@ -168,21 +222,32 @@ class Gameplay(GameState):
             for each_overlay in self.overlay_dict.values():
                 each_overlay.setting()
 
-    def enter(self, level):
-        self.current_level = level
-        self.game.entities_group.add(self.game.player)
-        for each_entity in self.game.entities_group:
-            each_entity.status = "enter_arena"
+    def key_handle(self, event):
+        if event.is_keypress(pygame.K_e):
+            if self.pause is False:
+                self.pause = True
+                self.overlay_dict["timer"].start_timer = False
+                self.level_switch(4)
+            else:
+                self.pause = False
+                self.overlay_dict["timer"].start_timer = True
 
-    # def entry_new_level(self):
-    #     for each_entity in self.game.entities_group:
-    #         ##X,Y
-    #         each_entity.status = "enter_arena"
+
+    def enter(self, to_level):
+        self.enemy_factory.already_create = False
+        if self.game.player not in self.game.entities_group:
+            self.game.entities_group.add(self.game.player)
+            self.game.player.status = "enter_arena"
+        self.level_switch(to_level)
 
     def exit(self):
+        self.current_level = 0
         self.game.entities_group.empty()
         self.game.attack_group.empty()
         self.death_list = []
+        for overlay in self.overlay_dict.values():
+            overlay.reset()
+            self.game.overlay_manager.remove_overlay(overlay)
 
     def animated(self, screen):
         screen.fill((0, 0, 0))
@@ -191,30 +256,6 @@ class Gameplay(GameState):
         self.image = self.bg_animation[self.game_level[self.current_level]][0][self.frame_animation]
         screen.blit(self.image, self.game.screen_start)
 
-    def draw_state(self, screen, event):
-        self.animated(screen)
-        self.game.entities_group.draw(self.game.window)
-        self.game.attack_group.draw(self.game.window)
-        for button in self.button_list:
-            button.draw(screen, self.current_level)
-
-    def update_state(self, frame, ms_per_loop, event):
-        self.timer_ms += ms_per_loop
-        if self.timer_ms >= self.ms_per_frame:
-            self.timer_ms -= self.ms_per_frame
-            self.frame_animation += 1
-
-        for button in self.button_list:
-            button.update(event, self.current_level)
-
-        self.enemy_factory.create_boss(self.current_level)
-        self.game.entities_group.update(frame, ms_per_loop, self.game.attack_group, event_object)
-        self.game.attack_group.update(frame, ms_per_loop, self.game.attack_group)
-        Config.check_attack_collision(self.game.attack_group, self.game.entities_group)
-
-        self.check_kill(frame)
-        # self.level_switch()
-
     def check_kill(self, frame):
         if frame != 1:
             return
@@ -222,15 +263,9 @@ class Gameplay(GameState):
         for each in self.game.entities_group:
             ## someone death
             if each.death is True and each not in self.death_list:
-                # print(each.name)
                 if each == self.game.player:
                     self.game.state_manager.set_state("Menu")
-
-                    # self.game.current_state = "Menu"
-                    # self.game.game_state["Menu"].current_level = 3
-                    ## it only change current level of gameplay object not menu
-                    # self.current_level = 0
-
+                    self.overlay_dict["timer"].start_timer = False
                 else :
                     ## KEY TO CHANGE LEVEL
                     """
@@ -241,33 +276,43 @@ class Gameplay(GameState):
                     self.death_list.append(each)
 
         if len(self.death_list) == self.kill_require[self.game_level[self.current_level]]:
-            self.change_level = True
+            if self.current_level != 2:
+                self.level_switch(self.current_level+1)
+            else :
+                ## WINNING SCREEN
+                pass
 
 
 
-    def level_switch(self, next_level = 0):
-        # if self.change_level is False:
-        #     return
-
-        if next_level == 1:
-            if self.current_level == 0:
-                ## COUNT KILL COUNT ??
-                # self.game.entities_group.remove(self.game.player)
-                for each in self.game.entities_group:
-                    if each != self.game.player:
-                        self.game.entities_group.remove(each)
-                self.current_level = 1
-            # self.game.current_state = "transition"
-            # self.game.game_state["transition"].next_level = 1
-            # self.game.game_state["transition"].next_state = "Gameplay"
-
-            self.enemy_factory.already_create = False
-            self.change_level = False
-            self.game.attack_group.empty()
-        # elif self.change_level == 1:
-        #     for each in self.death_list:
-        #         self.death_list.remove(each)
-        #         self.game.entities_group.remove(each)
-        #     self.current_level = 2
-        #     self.enemy_factory.already_create = False
-        #     self.change_level = False
+    def level_switch(self, next_level=0):
+        if self.current_level != 4:
+            if next_level != 4:
+                print("run")
+                if next_level == 0:
+                    self.game.overlay_manager.add_overlay(self.overlay_dict["player_health"])
+                    self.game.overlay_manager.add_overlay(self.overlay_dict["timer"])
+                    self.enemy_factory.already_create = False
+                elif next_level == 1:
+                    self.overlay_dict["timer"].start_timer = True
+                    for each in self.game.entities_group:
+                        if each != self.game.player:
+                            self.game.entities_group.remove(each)
+                    self.current_level = 1
+                    self.enemy_factory.already_create = False
+                    self.game.attack_group.empty()
+                elif next_level == 2:
+                    for each in self.game.entities_group:
+                        if each != self.game.player:
+                            self.death_list.remove(each)
+                            self.game.entities_group.remove(each)
+                    self.game.overlay_manager.remove_overlay(self.overlay_dict["enemy1_health"])
+                    self.current_level = 2
+                    self.enemy_factory.already_create = False
+            else:
+                self.former_level = self.current_level
+                self.current_level = next_level
+        else:
+            self.pause = False
+            will_change = self.current_level
+            self.current_level = self.former_level
+            self.former_level = will_change

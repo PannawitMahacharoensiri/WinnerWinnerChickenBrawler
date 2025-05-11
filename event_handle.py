@@ -30,10 +30,13 @@ class EventHandle:
                 self.mouse_button.add(event.button)
 
 
-    def reset_event(self):
-        self.key_press = set()
-        self.mouse_position = (0,0)
-        self.mouse_button = set()
+    def reset_event(self, exclude):
+        if exclude != "key_press" or "key_press" not in exclude:
+            self.key_press = set()
+        if exclude != "mouse_pos" or "mouse_pos" not in exclude:
+            self.mouse_position = (0,0)
+        if exclude != "mouse_button" or "mouse_button" not in exclude:
+            self.mouse_button = set()
 
     def is_keypress(self, key):
         if key in self.key_press:

@@ -37,6 +37,7 @@ class OverlayManage:
         self.overlays.append(overlay)
 
     def remove_overlay(self, overlay):
+        # print(overlay)
         if overlay in self.overlays:
             self.overlays.remove(overlay)
 

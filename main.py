@@ -29,17 +29,12 @@ class Main:
         pygame.display.set_caption('Winner Winner Chicken Brawler')
         self.screen_start = (0,0)
         self.screen_start_before = self.screen_start
-
         self.arena_area = {"start_x":self.screen_start[0] + (32 * self.screen_scale),
                            "end_x": self.screen_start[0] + self.screen_info[0] - (32 * self.screen_scale),
                            "start_y":self.screen_start[1] + (24 * self.screen_scale),
-                           "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}  # ([start_x,end_x],[start_y, end_y])
-
+                           "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}
         self.state_manager = GameStateManage(self)
         self.overlay_manager = OverlayManage()
-
-        # self.current_state = "Menu"
-        self.all_frame = 0
 
     def get_global_frame(self, ms_per_loop):
         frame = 0
@@ -74,7 +69,6 @@ class Main:
             self.change_sprite_scale()
 
     def change_sprite_scale(self):
-        # print(f"Here is screen_scale {self.screen_scale}, Here screen info {self.screen_info}")
         if self.change_size["window"] is True:
             if self.player is not None:
                 self.player.rect.x += (self.screen_start[0] - self.screen_start_before[0])/self.screen_scale
@@ -93,44 +87,35 @@ class Main:
                 self.player.rect.x = (player_location[0] / self.before_scale) * self.screen_scale
                 self.player.rect.y = (player_location[1] / self.before_scale) * self.screen_scale
             for each in self.entities_group:
-                # print(f"before {each.rect.x/self.before_scale}")
                 if each != self.player:
                     location = (each.rect.x, each.rect.y)
                     each.load_sprite(each.sprites_key)
                     each.rect.x = (location[0]/self.before_scale) * self.screen_scale
                     each.rect.y = (location[1]/self.before_scale) * self.screen_scale
-                # print(each.rect.x/self.screen_scale)
             for each_attack in self.attack_group:
                 attack_location = (each_attack.rect.x, each_attack.rect.y)
                 each_attack.change_scale(self.screen_scale)
                 each_attack.rect.x = (attack_location[0]/self.before_scale) * self.screen_scale
                 each_attack.rect.y = (attack_location[1]/self.before_scale) * self.screen_scale
-            ## UPDATE TO EVERY STATE NOW
+        if self.state_manager.current_state == "Gameplay":
+            self.player.rect.x, self.player.rect.y, hit_wall, direct = Config.check_boundary(self.player, self.arena_area)
+            for each in self.entities_group:
+                if each.status != "enter_arena":
+                    each.rect.x, each.rect.y, hit_wall, hit_dir = Config.check_boundary(each, self.arena_area)
+
         self.state_manager.resize()
         self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
-        ## ENTITIES CREATION WILL SEE HOW I BUILD BOSS LATER: may be check len(self.entities_group) need to > 1
-        self.player = Player([0,50], game = self, name="jim")
-        # self.entities_group.add(self.player)
-
-        # build state (contain all level all button in that state)
+        self.player = Player([0,self.arena_area["end_y"]/2], game = self, name="jim")
         self.state_manager.register_state("Menu",Menu(self))
         self.state_manager.register_state("Gameplay", Gameplay(self))
-        # self.state_manager.register_state("transition", ScreenTransition(self))
-        self.state_manager.set_state("Menu")
-
-        # self.game_state["Menu"] = Menu(self)
-        # self.game_state["Gameplay"] = Gameplay(self, background)
-        # self.game_state["transition"] = ScreenTransition(self)
+        self.state_manager.set_state("Menu", 0)
 
         while self.program_running:
             ms_per_loop = self.clock.tick(self.game_fps)
-
             frame = self.get_global_frame(ms_per_loop)
-            self.all_frame += frame
 
-            ##KEYPRESS OF MAINLOOP
             keys = pygame.key.get_pressed()
             if event_object.quit_press():
                 self.program_running = False
@@ -139,15 +124,6 @@ class Main:
                 for i in self.entities_group.sprites():
                     show_health.append(i.health)
                 print(show_health)
-            # if keys[pygame.K_LSHIFT] and event_object.is_keypress(pygame.K_1):
-            #     if self.debug_mode is True:
-            #         self.debug_mode = False
-            #     else :
-            #         self.debug_mode = True
-            # if self.current_state == "Gameplay":
-            #     if self.debug_mode is True:
-            #         Config.open_debug(self.window, self.player, event_object.mouse_position)
-
             if self.overlay_manager.block_update is False:
                 self.state_manager.update(frame, ms_per_loop, event_object)
             self.overlay_manager.update(ms_per_loop)

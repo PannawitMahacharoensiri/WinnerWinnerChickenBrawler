@@ -4,10 +4,9 @@ import pygame
 from config import Config
 
 class Overlay:
-    def __init__(self, update_frequency):
+    def __init__(self):
         self.blocker = False
         self.timer_ms = 0
-        self.update_frequency = update_frequency
 
     def update_overlay(self, ms_per_loop):
         pass  # Only used for blocking overlays
@@ -18,19 +17,116 @@ class Overlay:
     def setting(self):
         pass
 
+    def reset(self):
+        pass
+
+class HealthBarOverlay(Overlay):
+    def __init__(self, game,entity, position=(10, 10), border_ratio=(80, 8), color=(0, 255, 0), border_color=(0, 0, 0)):
+        super().__init__()
+        self.game = game
+        self.entity = entity
+        self.initial_position = position
+        self.position = None
+        self.initial_ratio = border_ratio
+        self.size = None
+        self.color = color
+        self.border_color = border_color
+        self.setting()
+
+    def setting(self):
+        self.size = (self.initial_ratio[0] * self.game.screen_scale,self.initial_ratio[1] * self.game.screen_scale)  ##DRAW BORDER
+        self.position = ((self.initial_position[0] *self.game.screen_scale) + self.game.screen_start[0],
+                         ((self.initial_position[1]) *self.game.screen_scale) + self.game.screen_start[1])
+
+    def update_overlay(self, ms_per_loop):
+        pass  # You can animate here later if needed
+
+    def draw_overlay(self, screen):
+        # Bar dimensions
+        bar_x, bar_y = self.position
+        bar_width = int((self.entity.health / self.entity.max_health) * self.size[0])
+        bar_height = self.size[1]
+
+        # Draw background (optional: gray)
+        pygame.draw.rect(screen, (100, 100, 100), (bar_x, bar_y, self.size[0], bar_height))
+
+        # Draw filled health
+        pygame.draw.rect(screen, self.color, (bar_x, bar_y, bar_width, bar_height))
+
+        # Draw border
+        pygame.draw.rect(screen, self.border_color, (bar_x, bar_y, self.size[0], bar_height), 2)
+
+
+class TimerOverlay(Overlay):
+    def __init__(self, game, border_position, border_ratio,
+                 font_name = None, text_color= (255,255,255)):
+        super().__init__()
+        self.game = game
+        self.blocker = False
+        self.font_name = font_name
+        self.font = None
+        self.initial_position = border_position
+        self.elapsed_time = 0      # in ms
+        self.finished = False
+        self.start_timer = False
+        self.initial_ratio = border_ratio #(width, height)
+        self.border = None
+        self.rect = None
+        self.text_color = text_color
+        self.text_surface = None
+        self.text_rect = None
+        self.time = None
+
+        self.setting()
+
+    def reset(self):
+        self.elapsed_time = 0
+
+    def update_overlay(self, ms_per_loop):
+        if self.finished is False:
+            if self.start_timer is True:
+                self.elapsed_time += ms_per_loop
+        if self.elapsed_time < 60000:
+            time_in_sec = self.elapsed_time / 1000
+            self.time = f"{time_in_sec:.2f}s"
+        else :
+            total_seconds = self.elapsed_time / 1000
+            minutes = int(total_seconds // 60)
+            seconds = total_seconds % 60
+            self.time = f"{minutes:02}:{seconds:05.2f}m"
+
+    def draw_overlay(self, screen):
+        self.text_surface = self.font.render(self.time, True, self.text_color)
+        screen.blit(self.border, (self.rect.x, self.rect.y))
+        screen.blit(self.text_surface, self.text_rect)
+
+    def setting(self):
+        self.font = pygame.font.SysFont(self.font_name, int(15*self.game.screen_scale))
+        self.border = pygame.Surface((self.initial_ratio[0] * self.game.screen_scale,
+                                      self.initial_ratio[1] * self.game.screen_scale))  ##DRAW BORDER
+        self.border.set_colorkey((0, 0, 0))
+        self.rect = self.border.get_rect()
+        self.rect.x = ((self.initial_position[0]-(self.initial_ratio[0]/2))
+                       *self.game.screen_scale) + self.game.screen_start[0]
+        self.rect.y = ((self.initial_position[1]-(self.initial_ratio[1]/2))
+                       *self.game.screen_scale) + self.game.screen_start[1]
+        time_in_sec = self.elapsed_time / 1000
+        self.text_surface = self.font.render(f"{time_in_sec:.2f}s", True, self.text_color)
+        self.text_rect = self.text_surface.get_rect(center=self.rect.center)
+
 
 class Dialog(Overlay):
     def __init__(self):
-        super().__init__(update_frequency)
+        super().__init__()
         self.blocker = True
 
 class Transition(Overlay):
-    def __init__(self, game, update_frequency, initial_box_size=32, command=None, color=(0,0,0)):
-        super().__init__(update_frequency)
+    def __init__(self, game, ms_per1_update, initial_box_size=32, command=None, color=(0,0,0)):
+        super().__init__()
         self.game = game
         self.blocker = True
         self.initial_box_size = initial_box_size
-        self.ms_per_1update = 20
+        self.ms_per_1update = ms_per1_update
         self.box_size = None
         self.valid_level = []
 
@@ -47,6 +143,13 @@ class Transition(Overlay):
         self.command = command
 
         self.setting()
+
+    def reset(self):
+        self.timer_ms = 0
+        self.current_y = 0
+        self.current_x = 0
+        self.state = "fade_in"
+        self.finish = {"fade_in": False, "fade_out": False}
 
     def setting(self):
         self.box_size = self.initial_box_size * self.game.screen_scale
@@ -71,6 +174,7 @@ class Transition(Overlay):
                 self.current_y = 0
                 self.current_x = 0
             elif self.state == "fade_out":
+                self.reset()
                 self.game.overlay_manager.remove_overlay(self)
 
         if self.state == "fade_in" and self.finish[self.state] is False:
@@ -107,8 +211,8 @@ class Transition(Overlay):
                     screen.blit(self.image,(box_x * self.box_size + self.game.screen_start[0], box_y * self.box_size + self.game.screen_start[1]))
 
 class TransitionHalf(Transition):
-    def __init__(self, game, update_frequency, initial_box_size=32, command=None, color=(0,0,0)):
-        super().__init__(game, update_frequency, initial_box_size, command, color)
+    def __init__(self, game, ms_per1_update, initial_box_size=32, command=None, color=(0,0,0)):
+        super().__init__(game, ms_per1_update,initial_box_size, command, color)
 
     def transition_update(self):
         if self.finish[self.state] is True:
@@ -119,6 +223,7 @@ class TransitionHalf(Transition):
                 self.current_y = 0
                 self.current_x = 0
             elif self.state == "fade_out":
+                self.reset()
                 self.game.overlay_manager.remove_overlay(self)
 
         if self.state == "fade_in" and self.finish[self.state] is False:

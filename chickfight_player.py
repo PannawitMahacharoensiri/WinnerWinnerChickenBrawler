@@ -28,7 +28,8 @@ class Player(pygame.sprite.Sprite):
         # Animation related
         self.game = game
         self.name = name
-        self.health = 100
+        self.max_health = 100
+        self.health = self.max_health
         self.sprite_dir = "sprites\\Walk_substitute2.png"
         self.size = self.game.screen_scale
         self.status = None
@@ -58,7 +59,7 @@ class Player(pygame.sprite.Sprite):
         # self.rect.height = 50
         self.old_position = (0,0)
         self.atk_pos = (0, 0)
-        self.rect.center = (0, position[1]*self.game.screen_scale)
+        self.rect.center = (position[0], position[1])
         # self.rect.y = position[1]//2
 
         self.velocity = [0,0]
@@ -164,18 +165,37 @@ class Player(pygame.sprite.Sprite):
             self.rect.x = check1_x
             self.rect.y = check1_y
 
-
-
         elif self.status == "enter_arena":
-            self.charge[self.status] += frame
             self.action = "enter_arena"
             self.loop_action = True
-            self.velocity[0] += 0.1 * self.game.screen_scale
-            # elif self.charge[self.status] == 2:
-                # self.velocity[0] -= 0. * self.game.screen_scale
-            self.rect.x += self.velocity[0]
-            self.rect.y += self.velocity[1]
-            if  self.game.arena_area["start_x"] < self.rect.x < self.game.arena_area["end_x"]:
+            accelerate = 500
+            gravity = 2500
+            bounce_strength = 1500
+            damping = 5
+
+            if self.rect.x < self.game.arena_area["start_x"]:
+                self.velocity[0] += accelerate * (ms_per_loop / 1000)
+                self.velocity[1] -= bounce_strength * (ms_per_loop / 1000)
+            elif self.rect.right > self.game.arena_area["end_x"]:
+                self.velocity[0] -= accelerate * (ms_per_loop / 1000)
+                self.velocity[1] -= bounce_strength * (ms_per_loop / 1000)
+
+            if self.rect.y < self.game.arena_area["start_y"]:
+                self.velocity[1] += gravity * (ms_per_loop / 1000)
+            elif self.rect.bottom > self.game.arena_area["end_y"]:
+                self.velocity[1] -= gravity * (ms_per_loop / 1000)
+
+            for i in range(2):
+                self.velocity[i] -= self.velocity[i] * damping * (ms_per_loop / 1000)
+                if abs(self.velocity[i]) < 2:
+                    self.velocity[i] = 0
+
+            self.rect.x += self.velocity[0] * self.game.screen_scale * (ms_per_loop / 1000)
+            self.rect.y += self.velocity[1] * self.game.screen_scale * (ms_per_loop / 1000)
+
+            inside_x = self.game.arena_area["start_x"] < self.rect.x < self.game.arena_area["end_x"] - self.rect.width
+            inside_y = self.game.arena_area["start_y"] < self.rect.y < self.game.arena_area["end_y"] - self.rect.height
+            if inside_x and inside_y and self.velocity == [0, 0]:
                 self.status = None
 
 
