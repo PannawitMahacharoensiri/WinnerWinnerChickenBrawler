@@ -1,11 +1,12 @@
 from chickfight_player import Player
 from event_handle import event_object
-# from Sprite_handle import *
 from state_management import *
 from config import *
 import pygame
 import math
 from game_states import *
+from information_record import *
+from tkinter_opener import *
 
 class Main:
     def __init__(self):
@@ -14,12 +15,15 @@ class Main:
         self.game_fps = 60
         self.tracker1 = 0
         self.ms_per_1frame = 250
+        self.nickname = ""
+        self.round = 0
 
         self.program_running = True
         self.player = None
         self.entities_group = EntitiesGroup()
         self.attack_group = pygame.sprite.Group()
 
+        self.data = {"name":"", "success_defeat":[], "health_remain":[], "win_in":[], "score":[]}
         self.debug_mode = True
         self.before_scale = None
         self.screen_scale = 3
@@ -35,6 +39,7 @@ class Main:
                            "end_y": self.screen_start[1] + self.screen_info[1] - (4 * self.screen_scale)}
         self.state_manager = GameStateManage(self)
         self.overlay_manager = OverlayManage()
+        self.data_record = GameDataExporter(self.data)
 
     def get_global_frame(self, ms_per_loop):
         frame = 0
@@ -67,6 +72,11 @@ class Main:
 
         if True in self.change_size.values():
             self.change_sprite_scale()
+
+    @staticmethod
+    def open_stat_window():
+        window = GameDataViewer("game_data.csv")
+        window.mainloop()
 
     def change_sprite_scale(self):
         if self.change_size["window"] is True:
@@ -107,10 +117,9 @@ class Main:
         self.change_size = {"window":False, "screen":False}
 
     def main_loop(self):
-        self.player = Player([0,self.arena_area["end_y"]/2], game = self, name="jim")
         self.state_manager.register_state("Menu",Menu(self))
         self.state_manager.register_state("Gameplay", Gameplay(self))
-        self.state_manager.set_state("Menu", 0)
+        self.state_manager.set_state("Menu", 4)
 
         while self.program_running:
             ms_per_loop = self.clock.tick(self.game_fps)
@@ -132,7 +141,6 @@ class Main:
 
             event_object.update_event(self)
             pygame.display.update()
-
         pygame.quit()
 
 

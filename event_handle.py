@@ -29,6 +29,15 @@ class EventHandle:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.mouse_button.add(event.button)
 
+    @staticmethod
+    def key_to_char(key):
+        if pygame.K_a <= key <= pygame.K_z:
+            return chr(key)
+        if pygame.K_0 <= key <= pygame.K_9:
+            return chr(key)
+        if key == pygame.K_SPACE:
+            return ' '
+        return ''
 
     def reset_event(self, exclude):
         if exclude != "key_press" or "key_press" not in exclude:

@@ -20,12 +20,12 @@ class BossFactory:
             jokey = Boss1((self.game.screen_info[0]+self.game.screen_start[0], self.game.screen_info[1]/2), game=self.game, name="jokey")
             self.game.entities_group.add(jokey)
             self.already_create = True
-            self.state.overlay_dict["enemy1_health"] = HealthBarOverlay(self.game, jokey, position=(230,10))
-            self.game.overlay_manager.add_overlay(self.state.overlay_dict["enemy1_health"])
+            self.state.main_overlay["enemy1_health"] = HealthBarOverlay(self.game, jokey, position=(230,10))
+            self.game.overlay_manager.add_overlay(self.state.main_overlay["enemy1_health"])
         #
         elif game_level == 2 and len(self.game.entities_group) <= 1:
             jim = Boss2((self.game.screen_info[0]+self.game.screen_start[0], self.game.screen_info[1]/2), game = self.game, name = "jim")
             self.game.entities_group.add(jim)
             self.already_create = True
-            self.state.overlay_dict["enemy2_health"] = HealthBarOverlay(self.game, jim, position=(230, 10))
-            self.game.overlay_manager.add_overlay(self.state.overlay_dict["enemy2_health"])
+            self.state.main_overlay["enemy2_health"] = HealthBarOverlay(self.game, jim, position=(230, 10))
+            self.game.overlay_manager.add_overlay(self.state.main_overlay["enemy2_health"])

@@ -43,7 +43,6 @@ class Enemy(pygame.sprite.Sprite):
         self.life_check()
 
         if self.action not in [*self.cooldown.keys(),*self.charge.keys(), "death"] and self.status is None:
-            #and self.status != "confuse"#[*Boss1.attack_move.keys() ,"hurt"]:
             self.behaviour(frame, ms_per_loop)
 
         self.do_action(atk_group, frame, ms_per_loop)
@@ -123,20 +122,16 @@ class Dummy(Enemy):
         self.update_per_loop(frame, ms_per_loop)
         self.animated()
 
-
-########################################################################################################################
-########################################################################################################################
-
 class Boss1(Enemy):
-    sprites_key = {"idle": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
-                   "walk": [[4, 0, 1, 16, 16], [4, 0, 1, 16, 16], [4, 0, 1, 16, 16], [4, 0, 1, 16, 16]],
-                   "attack1": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
-                   "attack2": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
-                   "dash_attack": [[4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16], [4, 0, 0, 16, 16]],
-                   "charge_dash_attack": [[5, 0, 2, 16, 16], [5, 0, 2, 16, 16], [5, 0, 2, 16, 16], [5, 0, 2, 16, 16]],
-                   "hurt" : [[1, 0, 1, 16, 16],[1, 1, 1, 16, 16],[1, 2, 1, 16, 16],[1, 3, 1, 16, 16]],
-                   "death": [[6,0,3,16,16],[6,0,3,16,16],[6,0,3,16,16],[6,0,3,16,16]],
-                   "enter_arena" : [[1, 0, 1, 16, 16],[1, 1, 1, 16, 16],[1, 2, 1, 16, 16],[1, 3, 1, 16, 16]]}
+    sprites_key = {"idle": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "walk": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "attack1": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "attack2": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "dash_attack": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "charge_dash_attack": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "hurt" : [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "death": [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]],
+                   "enter_arena" : [[1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16], [1, 0, 0, 16, 16]]}
 
     ## ONLY FOR READ AND NOT CHANGE THE VALUE SO I NOT PUT IT IN ATTRIBUTE
     enemy_behavior = {"attack1":{"damage":5, "hitbox":(3,3), "cooldown":3},
@@ -316,7 +311,6 @@ class Boss1(Enemy):
                                                                      self.old_position)
 
 
-    # WHY YOU NOT CALL IN THE BEHAVIOUR CAUSE THERE ARE SOME DELAY BETWEEN COMMAND TO ATTACK AND REAL BUILD ATK HITBOX
     def do_action(self, atk_group, frame, ms_per_loop):
         if self.death is True:
             return
@@ -336,16 +330,20 @@ class Boss1(Enemy):
                 self.charge["charge_dash_attack"] = 0
                 self.action = "dash_attack"
                 self.frame_animation = 0
-                self.atk_pos = (self.game.player.rect.center[0] + (self.game.player.velocity[0] * 50 * self.game.screen_scale * (ms_per_loop / 1000) ) , #self.charge time * speed * screen scale * ???-> 5 * 2
-                                self.game.player.rect.center[1] + (self.game.player.velocity[1] * 50 * self.game.screen_scale * (ms_per_loop / 1000)))
+                self.atk_pos = (self.game.player.rect.center[0] +
+                                (self.game.player.velocity[0] * 50 * self.game.screen_scale * (ms_per_loop / 1000) ) ,
+                                self.game.player.rect.center[1] +
+                                (self.game.player.velocity[1] * 50 * self.game.screen_scale * (ms_per_loop / 1000)))
                 length, dx, dy = Config.get_length(self.rect.center, self.atk_pos)
                 self.velocity = [dx/length, dy/length]
 
         elif self.action == "dash_attack":
             self.speed = self.normal_speed * Boss1.enemy_behavior["dash_attack"]["multiply_speed"]
             self.loop_action = True
-            self.rect.center = (self.rect.center[0] + ((self.velocity[0]) * self.speed * self.game.screen_scale * (ms_per_loop / 1000) ),
-                                self.rect.center[1] + ((self.velocity[1]) * self.speed * self.game.screen_scale * (ms_per_loop / 1000) ))
+            self.rect.center = (self.rect.center[0] +
+                                ((self.velocity[0]) * self.speed * self.game.screen_scale * (ms_per_loop / 1000) ),
+                                self.rect.center[1] +
+                                ((self.velocity[1]) * self.speed * self.game.screen_scale * (ms_per_loop / 1000) ))
             check1_x, check1_y, hit_wall, wall_dir = Config.check_boundary(self, self.game.arena_area)
             self.rect.x = check1_x
             self.rect.y = check1_y
@@ -362,18 +360,16 @@ class Boss1(Enemy):
 class Boss2(Enemy):
     sprites_key = {"idle": [[5, 0, 0, 16, 25], [5, 0, 0, 16, 25], [5, 0, 0, 16, 25], [5, 0, 0, 16, 25]],
                    "try_to_run":[[3, 0, 1, 16, 25], [3, 0, 1, 16, 25], [3, 0, 1, 16, 25], [3, 0, 1, 16, 25]],
-                   "attack":[[1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25], [1, 0, 0, 16, 25]],
+                   "attack":[[1, 2, 0, 16, 25], [1, 2, 0, 16, 25], [1, 2, 0, 16, 25], [1, 2, 0, 16, 25]],
                    "hurt":[[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25]],
-                   "death":[[2,4,2,16,25],[2,4,2,16,25],[2,4,2,16,25],[2,4,2,16,25]],
-                   "run":[[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25]],
-                   "spike":[[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25]],
-                   "enter_arena":[[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25]],
-                   "appear":[[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25]],
-                   "stuck":[[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25],[6,1,2,16,25]]}
+                   "death":[[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25],[1,1,2,16,25]],
+                   "run":[[2,0,4,16,25],[2,0,4,16,25],[2,0,4,16,25],[2,0,4,16,25]],
+                   "spike":[[1,1,4,16,25],[1,1,4,16,25],[1,1,4,16,25],[1,1,4,16,25]],
+                   "enter_arena":[[4,0,3,16,25],[4,0,3,16,25],[4,0,3,16,25],[4,0,3,16,25]]}
 
-    enemy_behavior = {"run":{"damage":0, "hitbox":(0, 0), "cooldown":10000, "charge_time":1500},
-                  "attack":{"damage":10, "hitbox":(3,3), "cooldown":750},
-                  "spike":{"damage":5, "hitbox":(32,32), "cooldown":2500, "sprite_dir":'sprites\\spike_attack.png',
+    enemy_behavior = {"run":{"damage":0, "hitbox":(0, 0), "cooldown":5000, "charge_time":1500},
+                  "attack":{"damage":10, "hitbox":(3,3), "cooldown":100},
+                  "spike":{"damage":5, "hitbox":(32,32), "cooldown":1000, "sprite_dir":'sprites\\spike_attack.png',
                            "sprite_key":{"normal":[[1,0,0,32,32]]}},
                       "stunt":{"charge_time":3500}}
 
@@ -544,13 +540,12 @@ class Boss2(Enemy):
 
     def health_reduce(self, bullet_damage):
         if self.health > 0:
-            ## ADD MORE ANIMATION
-            if self.action == "run":
-                self.status = "stunt"
-
             self.health -= bullet_damage
-            self.action = "hurt"
-            self.cooldown["hurt"] = 5
+            if self.action == "try_to_run":
+                self.cooldown["hurt"] = 500
+            else :
+                self.action = "hurt"
+                self.cooldown["hurt"] = 200
             self.frame_animation = 0
             if self.cooldown["try_to_run"] > 0:
                 self.cooldown["try_to_run"] -= 100

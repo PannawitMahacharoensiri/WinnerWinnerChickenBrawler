@@ -10,11 +10,11 @@ class GameStateManage:
     def register_state(self, state_name, state_object):
         self.states[state_name] = state_object
 
-    def set_state(self, name, level=0):
+    def set_state(self, name, to_level):
         if self.current_state is not None:
             self.current_state.exit()
         self.current_state = self.states[name]
-        self.current_state.enter(level)
+        self.current_state.enter(to_level)
 
     def update(self, frame, ms_per_loop, event_object):
         self.current_state.update_state(frame, ms_per_loop, event_object)

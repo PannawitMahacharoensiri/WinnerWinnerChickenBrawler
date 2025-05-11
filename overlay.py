@@ -66,10 +66,10 @@ class TimerOverlay(Overlay):
         self.font_name = font_name
         self.font = None
         self.initial_position = border_position
-        self.elapsed_time = 0      # in ms
+        self.elapsed_time = 0
         self.finished = False
         self.start_timer = False
-        self.initial_ratio = border_ratio #(width, height)
+        self.initial_ratio = border_ratio
         self.border = None
         self.rect = None
         self.text_color = text_color
@@ -247,7 +247,8 @@ class TransitionHalf(Transition):
 class Button:
 
     def __init__(self, name, game, border_position, border_ratio, level, text, command,
-                 font_name = None, text_color= (0,0,0), color = (255,255,255) ,hover_color = (100,100,100)):
+                 font_name = None, text_color= (0,0,0), color = (255,255,255) ,hover_color = (100,100,100),
+                 level_set = []):
         self.name = name
         self.game = game
         self.initial_position = border_position
@@ -255,6 +256,7 @@ class Button:
         self.level = level
         self.border = None
         self.rect = None
+        self.leveL_set = level_set
 
         self.font_name = font_name
         self.font = None
@@ -292,13 +294,13 @@ class Button:
 
     def update(self, event, game_level):
         # self.action = False
-        if game_level == self.level:
+        if game_level == self.level or game_level in self.leveL_set :
             self.check_hover(event)
             if self.hovered is True and event.mouse_click(1):
                 self.command()
 
     def draw(self, screen, game_level):
-        if game_level == self.level:
+        if game_level == self.level or game_level in self.leveL_set:
             if self.hovered is True:
                 self.border.fill(self.hover_color)
             else :
